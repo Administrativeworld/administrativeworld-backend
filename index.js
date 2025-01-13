@@ -1,17 +1,30 @@
 const { configDotenv } = require('dotenv');
 const express = require('express');
 const app = express();
+const userRoutes = require('./routes/AuthRouter');
+require('dotenv').config();
+
 
 // Database
 const database = require('./config/database');
 database.connect();
+
+
 // Middleware to parse JSON
 app.use(express.json());
-require('dotenv').config();
+app.use(cookieParser());
+app.use(
+	cors({
+		origin: "*",
+		credentials: true,
+	})
+);
 
-// Routes
-const  AuthRouter = require('./routes/AuthRouter');
-app.use('/Home/api/v1/', AuthRouter);
+
+
+// Setting up routes
+app.use("/api/v1/auth", userRoutes);
+
 
 
 // Start the server
