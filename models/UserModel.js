@@ -26,6 +26,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["Admin", "Student", "Instructor"],
       required: true,
+      default: "Student"
     },
     active: {
       type: Boolean,
