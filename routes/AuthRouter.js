@@ -14,17 +14,17 @@ const {
   resetPassword,
 } = require("../controllers/resetPassword");
 
-const authentication = require("../middleware/auth.js");
+const { auth } = require("../middleware/auth")
 const welcome = require("../controllers/welcome.js");
 
 // Routes for Login, Signup, and Authentication
 router.post("/login", login);
 router.post("/signup", signup);
 router.post("/sendotp", sendotp);
-router.post("/changepassword", authentication, changePassword);
+router.post("/changepassword", auth, changePassword);
 router.post("/reset-password-token", resetPasswordToken);
 router.post("/reset-password", resetPassword);
-router.post("/validate", authentication, (req, res) => {
+router.post("/validate", auth, (req, res) => {
   res.status(200).json({ success: true, user: req.user });
 });
 router.get("/welcome", welcome);

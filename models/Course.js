@@ -26,6 +26,9 @@ const coursesSchema = new mongoose.Schema({
   price: {
     type: Number,
   },
+  coupancode:{
+    type: String,
+  },
   thumbnail: {
     type: String,
   },

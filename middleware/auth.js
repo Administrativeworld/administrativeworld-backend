@@ -2,10 +2,9 @@ const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 const User = require("../models/UserModel");
 dotenv.config();
-
-const authentication = async (req, res, next) => {
+exports.auth = async (req, res, next) => {
 	try {
-		// Extracting JWT from request cookies, body, or header
+		// Extracting JWT from request cookies, body or header
 		const token =
 			req.cookies.token ||
 			req.body.token ||
@@ -13,42 +12,63 @@ const authentication = async (req, res, next) => {
 
 		// If JWT is missing, return 401 Unauthorized response
 		if (!token) {
-			return res.status(400).json({ success: false, message: "Token Missing" });
+			return res.status(401).json({ success: false, message: `Token Missing` });
 		}
 
 		try {
 			// Verifying the JWT using the secret key stored in environment variables
-			const decode = jwt.verify(token, process.env.JWT_SECRET);
-			// Fetching the user's details from the database
-			const user = await User.findOne({ email: decode.email });
-
-			if (!user) {
-				return res.status(404).json({ success: false, message: "User not found" });
-			}
-
-			// Storing the decoded JWT payload and user document in the request object for further use
-			req.user = user;
+			const decode = await jwt.verify(token, process.env.JWT_SECRET);
+			console.log(decode);
+			// Storing the decoded JWT payload in the request object for further use
+			req.user = decode;
 		} catch (error) {
 			// If JWT verification fails, return 401 Unauthorized response
-			if (error.name === "JsonWebTokenError") {
-				return res.status(401).json({ success: false, message: "Token is invalid" });
-			} else if (error.name === "TokenExpiredError") {
-				return res.status(401).json({ success: false, message: "Token expired" });
-			} else {
-				console.error("Token verification error:", error);
-				return res.status(500).json({ success: false, message: "Internal server error" });
-			}
+			return res
+				.status(401)
+				.json({ success: false, message: "token is invalid" });
 		}
 
 		// If JWT is valid, move on to the next middleware or request handler
 		next();
 	} catch (error) {
-		// If there is an error during the authentication process, return 500 Internal Server Error response
-		return res.status(500).json({
+		// If there is an error during the authentication process, return 401 Unauthorized response
+		return res.status(401).json({
 			success: false,
-			message: "Something went wrong while validating the token",
+			message: `Something Went Wrong While Validating the Token`,
 		});
 	}
 };
+exports.isStudent = async (req, res, next) => {
+	try {
+		const userDetails = await User.findOne({ email: req.user.email });
 
-module.exports = authentication;
+		if (userDetails.accountType !== "Student") {
+			return res.status(401).json({
+				success: false,
+				message: "This is a Protected Route for Students",
+			});
+		}
+		next();
+	} catch (error) {
+		return res
+			.status(500)
+			.json({ success: false, message: `User Role Can't be Verified` });
+	}
+};
+exports.isAdmin = async (req, res, next) => {
+	try {
+		const userDetails = await User.findOne({ email: req.user.email });
+
+		if (userDetails.accountType !== "Admin") {
+			return res.status(401).json({
+				success: false,
+				message: "This is a Protected Route for Admin",
+			});
+		}
+		next();
+	} catch (error) {
+		return res
+			.status(500)
+			.json({ success: false, message: `User Role Can't be Verified` });
+	}
+};
