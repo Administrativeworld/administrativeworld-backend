@@ -47,6 +47,12 @@ const userSchema = new mongoose.Schema(
         ref: "Course",
       },
     ],
+    post:[
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref:"Post"
+      }
+    ],
     token: {
       type: String,
     },

@@ -13,6 +13,12 @@ const categorySchema = new mongoose.Schema({
 			ref: "Course",
 		},
 	],
+	Post: [
+		{
+			type: mongoose.Schema.Types.ObjectId,
+			ref: "Post",
+		},
+	],
 });
 
 module.exports = mongoose.model("Category", categorySchema);

@@ -6,6 +6,7 @@ const cors = require("cors");
 const userRoutes = require('./routes/AuthRouter'); // Ensure this path is correct
 const userCourse = require('./routes/userCourses');
 const userProfile = require('./routes/Profile');
+const Post = require('./routes/PostRoutes');
 const userContact = require('./routes/Contack');
 const userPayment = require('./routes/Payment');
 const fileUpload = require("express-fileupload");
@@ -45,6 +46,7 @@ app.use("/api/v1/courses", userCourse);
 app.use("/api/v1/profile", userProfile);
 app.use("/api/v1/contact", userContact);
 app.use("/api/v1/payment", userPayment);
+app.use("/api/v1/post", Post);
 
 // Start the server
 const PORT = process.env.PORT || 5000;
