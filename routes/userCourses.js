@@ -3,10 +3,10 @@ const router = express.Router();
 const { auth, isStudent, isAdmin } = require("../middleware/auth")
 // ************** category ****************************
 const {
-    showAllCategories,
-    createCategory,
-    categoryPageDetails,
-  } = require('../controllers/Category')
+  showAllCategories,
+  createCategory,
+  categoryPageDetails,
+} = require('../controllers/Category')
 
 
 
@@ -19,6 +19,7 @@ const {
   getCourseDetails,
   getFullCourseDetails,
   deleteCourse,
+  getCourseCreation,
 } = require('../controllers/Course')
 // ************** SECCTION IMPORTED ****************************
 const {
@@ -45,14 +46,15 @@ const {
 } = require("../controllers/courseProgress")
 
 // ************** CATEGORY ROUTES FOR ADMIN ****************************
-router.post("/createCategory",auth, isAdmin, createCategory)
-router.get("/showAllCategories",auth, isAdmin, showAllCategories)
-router.post("/getCategoryPageDetails",auth, isAdmin, categoryPageDetails)
+router.post("/createCategory", auth, isAdmin, createCategory)
+router.get("/showAllCategories", auth, isAdmin, showAllCategories)
+router.post("/getCategoryPageDetails", auth, isAdmin, categoryPageDetails)
 
 // ************** COURSE FOR ADMIN ****************************
-router.post("/createCourse",auth, isAdmin, createCourse)
+router.post("/createCourse", auth, isAdmin, createCourse)
 // Edit a course
-router.post("/editCourse",auth, isAdmin, editCourse)
+router.post("/editCourse", auth, isAdmin, editCourse)
+router.get("/courseCreationDraft", auth, getCourseCreation)
 
 // ************** SECTION FOR ADMIN ****************************
 //Add a Section to a Course
