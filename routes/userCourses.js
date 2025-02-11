@@ -20,6 +20,7 @@ const {
   getFullCourseDetails,
   deleteCourse,
   getCourseCreation,
+  publishCourse
 } = require('../controllers/Course')
 // ************** SECCTION IMPORTED ****************************
 const {
@@ -47,13 +48,14 @@ const {
 
 // ************** CATEGORY ROUTES FOR ADMIN ****************************
 router.post("/createCategory", auth, isAdmin, createCategory)
-router.get("/showAllCategories", auth, isAdmin, showAllCategories)
+router.get("/showAllCategories", showAllCategories)
 router.post("/getCategoryPageDetails", auth, isAdmin, categoryPageDetails)
 
 // ************** COURSE FOR ADMIN ****************************
 router.post("/createCourse", auth, isAdmin, createCourse)
 // Edit a course
 router.post("/editCourse", auth, isAdmin, editCourse)
+router.post("/publishCourse", auth, publishCourse)
 router.get("/courseCreationDraft", auth, getCourseCreation)
 
 // ************** SECTION FOR ADMIN ****************************

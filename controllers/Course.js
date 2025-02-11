@@ -93,7 +93,7 @@ exports.createCourse = async (req, res) => {
     await CourseCreation.create({
       creation: true,
       courseId: newCourse._id,
-      creationStep: 2,
+      creationStep: 1,
     })
     // Add the new course to the User Schema of the Instructor
     await User.findByIdAndUpdate(
@@ -158,6 +158,41 @@ exports.getCourseCreation = async (req, res) => {
     })
   }
 }
+
+exports.publishCourse = async (req, res) => {
+  try {
+    const { courseId } = req.body;
+
+    if (!courseId) {
+      return res.status(400).json({ message: "courseId not provided" });
+    }
+
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+
+    // Update the course status to 'Published'
+    course.status = "Published";
+    await course.save();
+
+    await CourseCreation.findOneAndDelete({ courseId: courseId })
+
+    res.status(200).json({
+      success: true,
+      message: "Course published successfully",
+      course,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to publish course",
+      error: error.message,
+    });
+  }
+};
+
 
 // Edit Course Details
 exports.editCourse = async (req, res) => {
@@ -228,33 +263,57 @@ exports.editCourse = async (req, res) => {
 // Get Course List
 exports.getAllCourses = async (req, res) => {
   try {
-    const allCourses = await Course.find(
-      { status: "Published" },
-      {
-        courseName: true,
-        price: true,
-        thumbnail: true,
-        instructor: true,
-        ratingAndReviews: true,
-        studentsEnrolled: true,
-      }
-    )
+    // Ensure page & limit are numbers and have default values
+    let page = parseInt(req.query.page) || 1;
+    let limit = parseInt(req.query.limit) || 10;
+
+    // Ensure page is at least 1
+    if (page < 1) page = 1;
+    if (limit < 1) limit = 10;
+
+    // Debugging: Log pagination values
+    console.log("Requested Page:", page);
+    console.log("Requested Limit:", limit);
+
+    // Get total count of courses
+    const totalCourses = await Course.countDocuments({ status: "Published" });
+
+    // Ensure we do not exceed total courses
+    const totalPages = Math.ceil(totalCourses / limit);
+    if (page > totalPages) page = totalPages;
+
+    // Fetch paginated courses
+    const courses = await Course.find({ status: "Published" })
+      .select("courseName price thumbnail instructor ratingAndReviews studentsEnrolled courseDescription")
       .populate("instructor")
-      .exec()
-    console.log(allCourses);
+      .skip((page - 1) * limit) // Skip previous records
+      .limit(limit) // Limit results
+      .exec();
+
+    // Debugging: Log returned courses
+    console.log("Courses Fetched:", courses.length);
+
     return res.status(200).json({
       success: true,
-      data: allCourses,
-    })
+      totalPages,
+      currentPage: page,
+      totalCourses,
+      data: courses,
+    });
   } catch (error) {
-    console.log(error)
-    return res.status(404).json({
+    console.error("Error in fetching courses:", error.message);
+    return res.status(500).json({
       success: false,
-      message: `Can't Fetch Course Data`,
+      message: "Can't Fetch Course Data",
       error: error.message,
-    })
+    });
   }
-}
+};
+
+
+
+
+
 
 exports.getCourseDetails = async (req, res) => {
   try {
