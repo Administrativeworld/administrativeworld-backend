@@ -6,17 +6,17 @@ const {
     createPost,
     editPost,
     deletePost,
-    getAllPosts, 
+    getAllPosts,
     getCategoryPosts
 } = require("../controllers/Post")
 // Create a new post (Admin only)
-router.post("/create",auth, isAdmin, createPost);
+router.post("/create", auth, isAdmin, createPost);
 
 // Edit an existing post (Only author can edit)
 router.put("/edit", auth, isAdmin, editPost);
 
 // Delete a post (Only author can delete)
-router.delete("/delete",auth, isAdmin, authMiddleware, deletePost);
+router.delete("/delete", auth, isAdmin, deletePost);
 
 // Get all posts
 router.get("/all", getAllPosts);

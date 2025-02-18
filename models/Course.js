@@ -52,7 +52,7 @@ const coursesSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["Draft", ""],
+    enum: ["Draft", "Published"],
   },
   createdAt: { type: Date, default: Date.now },
 })

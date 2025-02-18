@@ -7,7 +7,7 @@ const CourseCreation = require("../models/CourseCreation")
 const { uploadImageToCloudinary } = require("../utils/ImageUpload")
 const CourseProgress = require("../models/CourseProgress")
 const { convertSecondsToDuration } = require("../utils/secToDuration")
-
+const mongoose = require("mongoose");
 
 exports.createCourse = async (req, res) => {
   try {
@@ -158,7 +158,6 @@ exports.getCourseCreation = async (req, res) => {
     })
   }
 }
-
 exports.publishCourse = async (req, res) => {
   try {
     const { courseId } = req.body;
@@ -192,8 +191,6 @@ exports.publishCourse = async (req, res) => {
     });
   }
 };
-
-
 // Edit Course Details
 exports.editCourse = async (req, res) => {
   try {
@@ -263,35 +260,34 @@ exports.editCourse = async (req, res) => {
 // Get Course List
 exports.getAllCourses = async (req, res) => {
   try {
-    // Ensure page & limit are numbers and have default values
-    let page = parseInt(req.query.page) || 1;
-    let limit = parseInt(req.query.limit) || 10;
+    let { page = 1, limit = 10, categoryIds } = req.body;
 
-    // Ensure page is at least 1
+    // Convert to numbers and validate
+    page = parseInt(page) || 1;
+    limit = parseInt(limit) || 10;
     if (page < 1) page = 1;
     if (limit < 1) limit = 10;
 
-    // Debugging: Log pagination values
-    console.log("Requested Page:", page);
-    console.log("Requested Limit:", limit);
+    // Build the filter
+    let filter = { status: "Published" };
 
-    // Get total count of courses
-    const totalCourses = await Course.countDocuments({ status: "Published" });
+    // Apply category filter if provided
+    if (categoryIds && Array.isArray(categoryIds) && categoryIds.length > 0) {
+      filter.category = { $in: categoryIds };
+    }
 
-    // Ensure we do not exceed total courses
+    // Get total count
+    const totalCourses = await Course.countDocuments(filter);
     const totalPages = Math.ceil(totalCourses / limit);
     if (page > totalPages) page = totalPages;
 
-    // Fetch paginated courses
-    const courses = await Course.find({ status: "Published" })
-      .select("courseName price thumbnail instructor ratingAndReviews studentsEnrolled courseDescription")
-      .populate("instructor")
-      .skip((page - 1) * limit) // Skip previous records
-      .limit(limit) // Limit results
+    // Fetch courses
+    const courses = await Course.find(filter)
+      .select("courseName price thumbnail instructor tag ratingAndReviews studentsEnrolled courseDescription")
+      .populate("instructor category")
+      .skip((page - 1) * limit)
+      .limit(limit)
       .exec();
-
-    // Debugging: Log returned courses
-    console.log("Courses Fetched:", courses.length);
 
     return res.status(200).json({
       success: true,
@@ -309,12 +305,50 @@ exports.getAllCourses = async (req, res) => {
     });
   }
 };
+exports.getACourse = async (req, res) => {
+  try {
+    const { courseId } = req.body; // Extract courseId properly
+
+    if (!courseId) {
+      return res.status(400).json({ message: "courseId is required" });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(courseId)) {
+      return res.status(400).json({ message: "Invalid courseId format" });
+    }
+
+    // Populate courseContent -> sections -> subSection (including 'title' field)
+    const course = await Course.findOne({ _id: courseId, status: "Published" })
+      .populate([
+        {
+          path: "courseContent",
+          populate: {
+            path: "subSection",
+            select: "title description"
+          },
+        },
+        {
+          path: "category",
+          select: "name"
+        }
+      ]);
 
 
 
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
 
-
-
+    return res.status(200).json(course);
+  } catch (error) {
+    console.error("Error in fetching courses:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Can't Fetch Course Data",
+      error: error.message,
+    });
+  }
+};
 exports.getCourseDetails = async (req, res) => {
   try {
     const { courseId } = req.body
@@ -376,7 +410,6 @@ exports.getCourseDetails = async (req, res) => {
     })
   }
 }
-
 exports.getFullCourseDetails = async (req, res) => {
   try {
     const { courseId } = req.body
@@ -414,12 +447,12 @@ exports.getFullCourseDetails = async (req, res) => {
       })
     }
 
-    // if (courseDetails.status === "Draft") {
-    //   return res.status(403).json({
-    //     success: false,
-    //     message: `Accessing a draft course is forbidden`,
-    //   });
-    // }
+    if (courseDetails.status === "Draft") {
+      return res.status(403).json({
+        success: false,
+        message: `Accessing a draft course is forbidden`,
+      });
+    }
 
     let totalDurationInSeconds = 0
     courseDetails.courseContent.forEach((content) => {
@@ -448,6 +481,13 @@ exports.getFullCourseDetails = async (req, res) => {
     })
   }
 }
+
+
+
+
+
+
+
 // Delete the Course
 exports.deleteCourse = async (req, res) => {
   try {

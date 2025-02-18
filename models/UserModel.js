@@ -5,12 +5,10 @@ const userSchema = new mongoose.Schema(
   {
     firstName: {
       type: String,
-      required: true,
       trim: true,
     },
     lastName: {
       type: String,
-      required: true,
       trim: true,
     },
     email: {
@@ -47,10 +45,10 @@ const userSchema = new mongoose.Schema(
         ref: "Course",
       },
     ],
-    post:[
+    post: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref:"Post"
+        ref: "Post"
       }
     ],
     token: {

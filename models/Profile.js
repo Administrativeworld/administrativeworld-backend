@@ -1,8 +1,13 @@
 const mongoose = require("mongoose");
 
 const profileSchema = new mongoose.Schema({
+	user: {
+		type: mongoose.Schema.Types.ObjectId,
+		ref: "User", // References the User model
+	},
 	gender: {
 		type: String,
+		enum: ["Male", "Female", "Other"],
 	},
 	dateOfBirth: {
 		type: String,
@@ -10,10 +15,18 @@ const profileSchema = new mongoose.Schema({
 	about: {
 		type: String,
 		trim: true,
+		minlength: 10,
+		maxlength: 500,
 	},
 	contactNumber: {
-		type: Number,
+		type: String,
 		trim: true,
+		validate: {
+			validator: function (v) {
+				return /^\d{10}$/.test(v);
+			},
+			message: "Contact number must be a valid 10-digit number.",
+		},
 	},
 });
 

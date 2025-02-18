@@ -19,7 +19,7 @@ exports.auth = async (req, res, next) => {
 			// Verifying the JWT using the secret key stored in environment variables
 			const decode = await jwt.verify(token, process.env.JWT_SECRET);
 			// Storing the decoded JWT payload in the request object for further use
-			const userDoc = await User.findById(decode.id)
+			const userDoc = await User.findById(decode.id).populate('additionalDetails')
 			req.user = userDoc;
 		} catch (error) {
 			// If JWT verification fails, return 401 Unauthorized response
@@ -28,7 +28,6 @@ exports.auth = async (req, res, next) => {
 				.json({ success: false, message: "token is invalid" });
 		}
 
-		// If JWT is valid, move on to the next middleware or request handler
 		next();
 	} catch (error) {
 		// If there is an error during the authentication process, return 401 Unauthorized response

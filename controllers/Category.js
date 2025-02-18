@@ -27,7 +27,7 @@ exports.createCategory = async (req, res) => {
 }
 exports.showAllCategories = async (req, res) => {
   try {
-    const allCategories = await Category.find().populate("courses"); // Populate courses
+    const allCategories = await Category.find().select('name _id') // Populate courses
 
     res.status(200).json({
       success: true,

@@ -18,8 +18,9 @@ const {
   getAllCourses,
   getCourseDetails,
   getFullCourseDetails,
-  deleteCourse,
+
   getCourseCreation,
+  getACourse,
   publishCourse
 } = require('../controllers/Course')
 // ************** SECCTION IMPORTED ****************************
@@ -77,11 +78,12 @@ router.post("/deleteSubSection", auth, isAdmin, deleteSubSection)
 
 // ************** COURSE FOR STUDENT ****************************
 // Get all Registered Courses
-router.get("/getAllCourses", getAllCourses)
+router.post("/getAllCourses", getAllCourses)
 // Get Details for a Specific Courses
 router.post("/getCourseDetails", getCourseDetails)
 // Get Details for a Specific Courses
 router.post("/getFullCourseDetails", auth, getFullCourseDetails)
+router.post("/getACourse", getACourse)
 // Delete a Course
 // router.delete("/deleteCourse", deleteCourse)
 
