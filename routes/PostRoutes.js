@@ -16,7 +16,7 @@ router.post("/create", auth, isAdmin, createPost);
 router.put("/edit", auth, isAdmin, editPost);
 
 // Delete a post (Only author can delete)
-router.delete("/delete", auth, isAdmin, deletePost);
+router.delete("/delete", auth, isAdmin, authMiddleware, deletePost);
 
 // Get all posts
 router.get("/all", getAllPosts);
