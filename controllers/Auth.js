@@ -10,94 +10,94 @@ require("dotenv").config()
 
 // Signup
 exports.signup = async (req, res) => {
-  try {
-    const {
-      firstName,
-      lastName,
-      email,
-      password,
-      confirmPassword,
-      contactNumber,
-      otp,
-    } = req.body;
+  // try {
+  const {
+    firstName,
+    lastName,
+    email,
+    password,
+    confirmPassword,
+    contactNumber,
+    otp,
+  } = req.body;
 
-    if (
-      !firstName ||
-      !lastName ||
-      !email ||
-      !password ||
-      !confirmPassword ||
-      !otp
-    ) {
-      return res.status(422).json({
-        success: false,
-        message: "All fields are required",
-      });
-    }
-
-    if (password !== confirmPassword) {
-      return res.status(400).json({
-        success: false,
-        message: "Password and Confirm Password do not match. Please try again.",
-      });
-    }
-
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(409).json({
-        success: false,
-        message: "User already exists. Please sign in to continue.",
-      });
-    }
-
-    const response = await OTP.find({ email }).sort({ createdAt: -1 }).limit(1);
-    if (response.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "The OTP is not valid",
-      });
-    } else if (otp !== response[0].otp) {
-      return res.status(401).json({
-        success: false,
-        message: "The OTP is not valid",
-      });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    let approved = "";
-    approved === "Instructor" ? (approved = false) : (approved = true);
-
-    const profileDetails = await Profile.create({
-      gender: null,
-      dateOfBirth: null,
-      about: null,
-      contactNumber: null,
-    });
-
-    const user = await User.create({
-      firstName,
-      lastName,
-      email,
-      contactNumber,
-      password: hashedPassword,
-      approved: approved,
-      additionalDetails: profileDetails._id,
-      image: "",
-    });
-
-    return res.status(201).json({
-      success: true,
-      user,
-      message: "User registered successfully",
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
+  if (
+    !firstName ||
+    !lastName ||
+    !email ||
+    !password ||
+    !confirmPassword ||
+    !otp
+  ) {
+    return res.status(422).json({
       success: false,
-      message: "User cannot be registered. Please try again.",
+      message: "All fields are required",
     });
   }
+
+  if (password !== confirmPassword) {
+    return res.status(400).json({
+      success: false,
+      message: "Password and Confirm Password do not match. Please try again.",
+    });
+  }
+
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    return res.status(409).json({
+      success: false,
+      message: "User already exists. Please sign in to continue.",
+    });
+  }
+
+  const response = await OTP.find({ email }).sort({ createdAt: -1 }).limit(1);
+  if (response.length === 0) {
+    return res.status(404).json({
+      success: false,
+      message: "The OTP is not valid",
+    });
+  } else if (otp !== response[0].otp) {
+    return res.status(401).json({
+      success: false,
+      message: "The OTP is not valid",
+    });
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  let approved = "";
+  approved === "Instructor" ? (approved = false) : (approved = true);
+
+  const profileDetails = await Profile.create({
+    gender: null,
+    dateOfBirth: null,
+    about: null,
+    contactNumber: null,
+  });
+
+  const user = await User.create({
+    firstName,
+    lastName,
+    email,
+    contactNumber,
+    password: hashedPassword,
+    approved: approved,
+    additionalDetails: profileDetails._id,
+    image: "",
+  });
+
+  return res.status(201).json({
+    success: true,
+    user,
+    message: "User registered successfully",
+  });
+  // } catch (error) {
+  //   console.error(error);
+  //   return res.status(500).json({
+  //     success: false,
+  //     message: "User cannot be registered. Please try again.",
+  //   });
+  // }
 };
 
 // Login

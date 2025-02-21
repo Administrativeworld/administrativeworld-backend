@@ -66,6 +66,16 @@ const userSchema = new mongoose.Schema(
         ref: "courseProgress",
       },
     ],
+    contactNumber: {
+      type: String,
+      trim: true,
+      validate: {
+        validator: function (v) {
+          return /^\d{10}$/.test(v);
+        },
+        message: "Contact number must be a valid 10-digit number.",
+      },
+    },
   },
   { timestamps: true }
 )
