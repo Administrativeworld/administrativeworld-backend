@@ -1,11 +1,8 @@
-const Profile = require("../models/Profile")
-const CourseProgress = require("../models/CourseProgress")
-
-const Course = require("../models/Course")
-const User = require("../models/UserModel")
-const { uploadImageToCloudinary } = require("../utils/ImageUpload")
-const mongoose = require("mongoose")
-const { convertSecondsToDuration } = require("../utils/secToDuration")
+import Profile from "../models/Profile.js";
+import CourseProgress from "../models/CourseProgress.js";
+import Course from "../models/Course.js";
+import User from "../models/UserModel.js";
+import mongoose from "mongoose";
 // Method for updating a profile
 const parseDate = (dateString) => {
   if (!dateString || typeof dateString !== "string") return null;
@@ -19,7 +16,7 @@ const parseDate = (dateString) => {
   return null;
 };
 
-exports.updateProfile = async (req, res) => {
+export async function updateProfile(req, res) {
   try {
     const { firstName, lastName, dateOfBirth, about, contactNumber, gender } = req.body;
     const userId = req.user._id;
@@ -73,12 +70,11 @@ exports.updateProfile = async (req, res) => {
     console.error(error);
     return res.status(500).json({ success: false, error: error.message });
   }
-};
+}
 
-exports.deleteAccount = async (req, res) => {
+export async function deleteAccount(req, res) {
   try {
     const id = req.user.id
-    console.log(id)
     const user = await User.findById({ _id: id })
     if (!user) {
       return res.status(404).json({
@@ -112,13 +108,12 @@ exports.deleteAccount = async (req, res) => {
   }
 }
 
-exports.getAllUserDetails = async (req, res) => {
+export async function getAllUserDetails(req, res) {
   try {
     const id = req.user.id
     const userDetails = await User.findById(id)
       .populate("additionalDetails")
       .exec()
-    console.log(userDetails)
     res.status(200).json({
       success: true,
       message: "User Data fetched successfully",
@@ -132,7 +127,7 @@ exports.getAllUserDetails = async (req, res) => {
   }
 }
 
-exports.updateDisplayPicture = async (req, res) => {
+export async function updateDisplayPicture(req, res) {
   try {
     const { imageUrl } = req.body; // Expecting the URL from frontend
     const userId = req.user.id;
@@ -168,10 +163,9 @@ exports.updateDisplayPicture = async (req, res) => {
       message: error.message,
     });
   }
-};
+}
 
-
-exports.getEnrolledCourses = async (req, res) => {
+export async function getEnrolledCourses(req, res) {
   try {
     const user = req.user;
 
@@ -219,9 +213,9 @@ exports.getEnrolledCourses = async (req, res) => {
     //   message: error.message,
     // });
   }
-};
+}
 
-exports.adminDashboard = async (req, res) => {
+export async function adminDashboard(req, res) {
   try {
     const courseDetails = await Course.find({ instructor: req.user.id })
 

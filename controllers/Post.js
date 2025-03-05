@@ -1,8 +1,8 @@
-const Post = require('../models/Post');
-const User = require('../models/UserModel');
-const Category = require('../models/Category');
+import Post from '../models/Post.js';
+import User from '../models/UserModel.js';
+import Category from '../models/Category.js';
 
-exports.createPost = async (req, res) => {
+export async function createPost(req, res) {
     try {
         const userId = req.user.id;
 
@@ -65,9 +65,9 @@ exports.createPost = async (req, res) => {
             error: error.message,
         });
     }
-};
+}
 
-exports.editPost = async (req, res) => {
+export async function editPost(req, res) {
     try {
         const userId = req.user.id;
         const { postId, titleName, thumbnailUrl, bodyPost, category } = req.body;
@@ -111,8 +111,9 @@ exports.editPost = async (req, res) => {
             error: error.message,
         });
     }
-};
-exports.deletePost = async (req, res) => {
+}
+
+export async function deletePost(req, res) {
     try {
         const userId = req.user.id;
         const { postId } = req.body;
@@ -124,7 +125,7 @@ exports.deletePost = async (req, res) => {
             });
         }
 
-        
+
         const post = await Post.findById(postId);
         if (!post) {
             return res.status(404).json({
@@ -165,12 +166,13 @@ exports.deletePost = async (req, res) => {
             error: error.message,
         });
     }
-};
-exports.getAllPosts = async (req, res) => {
+}
+
+export async function getAllPosts(req, res) {
     try {
         const posts = await Post.find()
-            .populate("author", "name")  
-            .populate("category", "name"); 
+            .populate("author", "name")
+            .populate("category", "name");
 
         if (posts.length === 0) {
             return res.status(404).json({
@@ -190,10 +192,11 @@ exports.getAllPosts = async (req, res) => {
             error: error.message,
         });
     }
-};
-exports.getCategoryPosts = async (req, res) => {
+}
+
+export async function getCategoryPosts(req, res) {
     try {
-        const { categoryId } = req.params;  
+        const { categoryId } = req.params;
 
         const categoryExists = await Category.findById(categoryId);
         if (!categoryExists) {
@@ -224,4 +227,4 @@ exports.getCategoryPosts = async (req, res) => {
             error: error.message,
         });
     }
-};
+}

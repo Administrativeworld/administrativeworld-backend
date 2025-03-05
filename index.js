@@ -1,31 +1,40 @@
-const { configDotenv } = require('dotenv');
-const express = require('express');
+import { configDotenv } from 'dotenv';
+import express from 'express';
 const app = express();
-const cookieParser = require("cookie-parser");
-const cors = require("cors");
-const userRoutes = require('./routes/AuthRouter'); // Ensure this path is correct
-const userCourse = require('./routes/userCourses');
-const userProfile = require('./routes/Profile');
-const Post = require('./routes/PostRoutes');
-const userContact = require('./routes/Contack');
-const userPayment = require('./routes/Payment');
-const fileUpload = require("express-fileupload");
-require('dotenv').config();
+import cookieParser from "cookie-parser";
+import cors from "cors";
+import userRoutes from './routes/AuthRouter.js'; // Ensure this path is correct
+import userCourse from './routes/userCourses.js';
+import userProfile from './routes/Profile.js';
+import Post from './routes/PostRoutes.js';
+import userContact from './routes/Contack.js';
+import userPayment from './routes/Payment.js';
+import fileUpload from "express-fileupload";
+import dotenv from "dotenv";
+dotenv.config();
 
 // Database
-const database = require('./config/database');
-database.connect();
+
+import connect from './config/database.js';
+connect();
+
 // Connecting to cloudinary
-const { cloudinaryConnect } = require("./config/cloudinary");
+import { cloudinaryConnect } from "./config/cloudinary.js";
+
 cloudinaryConnect();
 
 // Middleware to parse JSON
 app.use(express.json());
 app.use(cookieParser());
+
 app.use(cors({
-	origin: 'http://localhost:5173', // Replace with your frontend URL
-	credentials: true
+	origin: ['https://administrativeworld2.netlify.app'], // Allow specific web origins
+	credentials: true, // Allow cookies & credentials for web
+	methods: ['GET', 'POST', 'PUT', 'DELETE'],
+	allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+
+
 app.use(
 	fileUpload({
 		useTempFiles: true,
@@ -36,9 +45,9 @@ app.use(
 
 
 // status of app 
-const { monitorMiddleware, monitorRoute } = require("./utils/Status");
-app.use(monitorMiddleware);
-app.get("/status", monitorRoute);
+import monitor from "./utils/Status.js";
+app.use(monitor.monitorMiddleware);
+app.get("/status", monitor.monitorRoute);
 
 // Setting up routes
 app.use("/api/v1/auth", userRoutes);

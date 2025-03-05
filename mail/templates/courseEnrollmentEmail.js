@@ -1,4 +1,4 @@
-exports.courseEnrollmentEmail = (courseName, name) => {
+export const courseEnrollmentEmail = (courseName, name) => {
     return `<!DOCTYPE html>
     <html>
     
@@ -67,8 +67,8 @@ exports.courseEnrollmentEmail = (courseName, name) => {
     
     <body>
         <div class="container">
-            <a href="https://studynotion-edtech-project.vercel.app"><img class="logo" src="https://i.ibb.co/7Xyj3PC/logo.png"
-                    alt="StudyNotion Logo"></a>
+            <img class="logo" src="https://res.cloudinary.com/tuhaniaji342cloud/image/upload/v1740144719/chatty_avatars/amgo5bzkpsuvm28g4wh3.png"
+                    alt="aw Logo"></a>
             <div class="message">Course Registration Confirmation</div>
             <div class="body">
                 <p>Dear ${name},</p>
@@ -84,4 +84,4 @@ exports.courseEnrollmentEmail = (courseName, name) => {
     </body>
     
     </html>`;
-  };
+};

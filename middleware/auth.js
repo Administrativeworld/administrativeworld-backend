@@ -1,8 +1,9 @@
-const jwt = require("jsonwebtoken");
-const dotenv = require("dotenv");
-const User = require("../models/UserModel");
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+import User from "../models/UserModel.js";
 dotenv.config();
-exports.auth = async (req, res, next) => {
+
+export async function auth(req, res, next) {
 	try {
 		// Extracting JWT from request cookies, body or header
 		const token =
@@ -36,8 +37,9 @@ exports.auth = async (req, res, next) => {
 			message: `Something Went Wrong While Validating the Token`,
 		});
 	}
-};
-exports.isStudent = async (req, res, next) => {
+}
+
+export async function isStudent(req, res, next) {
 	try {
 		const userDetails = await User.findOne({ email: req.user.email });
 
@@ -53,8 +55,9 @@ exports.isStudent = async (req, res, next) => {
 			.status(500)
 			.json({ success: false, message: `User Role Can't be Verified` });
 	}
-};
-exports.isAdmin = async (req, res, next) => {
+}
+
+export async function isAdmin(req, res, next) {
 	try {
 		const userDetails = await User.findOne({ email: req.user.email });
 
@@ -70,4 +73,4 @@ exports.isAdmin = async (req, res, next) => {
 			.status(500)
 			.json({ success: false, message: `User Role Can't be Verified` });
 	}
-};
+}

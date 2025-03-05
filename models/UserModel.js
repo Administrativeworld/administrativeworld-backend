@@ -1,5 +1,5 @@
 
-const mongoose = require("mongoose")
+import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
@@ -66,8 +66,18 @@ const userSchema = new mongoose.Schema(
         ref: "courseProgress",
       },
     ],
+    contactNumber: {
+      type: String,
+      trim: true,
+      validate: {
+        validator: function (v) {
+          return /^\d{10}$/.test(v);
+        },
+        message: "Contact number must be a valid 10-digit number.",
+      },
+    },
   },
   { timestamps: true }
 )
 
-module.exports = mongoose.model("user", userSchema)
+export default mongoose.model("user", userSchema);

@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const profileSchema = new mongoose.Schema({
 	user: {
@@ -17,17 +17,7 @@ const profileSchema = new mongoose.Schema({
 		trim: true,
 		minlength: 10,
 		maxlength: 500,
-	},
-	contactNumber: {
-		type: String,
-		trim: true,
-		validate: {
-			validator: function (v) {
-				return /^\d{10}$/.test(v);
-			},
-			message: "Contact number must be a valid 10-digit number.",
-		},
-	},
+	}
 });
 
-module.exports = mongoose.model("Profile", profileSchema);
+export default mongoose.model("Profile", profileSchema);

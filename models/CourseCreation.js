@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const courseCreationSchema = new mongoose.Schema({
   creation: { type: Boolean, required: true },
@@ -6,4 +6,4 @@ const courseCreationSchema = new mongoose.Schema({
   courseId: { type: mongoose.Schema.Types.ObjectId, ref: "Course", required: true }
 });
 
-module.exports = mongoose.model("CourseCreation", courseCreationSchema);
+export default mongoose.model("CourseCreation", courseCreationSchema);

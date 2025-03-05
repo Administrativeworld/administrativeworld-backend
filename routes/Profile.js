@@ -1,15 +1,15 @@
-const express = require("express")
+import express from "express";
 const router = express.Router()
-const { auth, isAdmin } = require("../middleware/auth")
-const {
+import { auth, isAdmin } from "../middleware/auth.js";
+
+import {
   deleteAccount,
   updateProfile,
   getAllUserDetails,
   updateDisplayPicture,
   getEnrolledCourses,
-  adminDashboardDashboard,
   adminDashboard,
-} = require("../controllers/Profile")
+} from "../controllers/Profile.js";
 
 // 
 //                                      Profile routes
@@ -22,4 +22,4 @@ router.post("/getEnrolledCourses", auth, getEnrolledCourses)
 router.put("/updateDisplayPicture", auth, updateDisplayPicture)
 router.get("/adminDashboard", auth, isAdmin, adminDashboard)
 
-module.exports = router
+export default router;

@@ -1,9 +1,9 @@
-const RatingAndReview = require("../models/RatingAndReview")
-const Course = require("../models/Course")
-const mongoose = require("mongoose")
+import RatingAndReview from "../models/RatingAndReview.js";
+import Course from "../models/Course.js";
+import mongoose from "mongoose";
 
 // Create a new rating and review
-exports.createRating = async (req, res) => {
+export async function createRating(req, res) {
   try {
     const userId = req.user.id
     const { rating, review, courseId } = req.body
@@ -67,7 +67,7 @@ exports.createRating = async (req, res) => {
 }
 
 // Get the average rating for a course
-exports.getAverageRating = async (req, res) => {
+export async function getAverageRating(req, res) {
   try {
     const courseId = req.body.courseId
 
@@ -106,7 +106,7 @@ exports.getAverageRating = async (req, res) => {
 }
 
 // Get all rating and reviews
-exports.getAllRatingReview = async (req, res) => {
+export async function getAllRatingReview(req, res) {
   try {
     const allReviews = await RatingAndReview.find({})
       .sort({ rating: "desc" })

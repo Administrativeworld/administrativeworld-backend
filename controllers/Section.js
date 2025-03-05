@@ -1,8 +1,9 @@
-const Section = require("../models/Section")
-const Course = require("../models/Course")
-const SubSection = require("../models/Subsection")
+import Section from "../models/Section.js";
+import Course from "../models/Course.js";
+import SubSection from "../models/Subsection.js";
+
 // CREATE a new section
-exports.createSection = async (req, res) => {
+export async function createSection(req, res) {
   try {
     // Extract the required properties from the request body
     const { sectionName, courseId } = req.body
@@ -54,7 +55,7 @@ exports.createSection = async (req, res) => {
 }
 
 // UPDATE a section
-exports.updateSection = async (req, res) => {
+export async function updateSection(req, res) {
   try {
     const { sectionName, sectionId, courseId } = req.body
     const section = await Section.findByIdAndUpdate(
@@ -70,7 +71,6 @@ exports.updateSection = async (req, res) => {
         },
       })
       .exec()
-    console.log(course)
     res.status(200).json({
       success: true,
       message: section,
@@ -87,7 +87,7 @@ exports.updateSection = async (req, res) => {
 }
 
 // DELETE a section
-exports.deleteSection = async (req, res) => {
+export async function deleteSection(req, res) {
   try {
     const { sectionId, courseId } = req.body
     await Course.findByIdAndUpdate(courseId, {
@@ -96,7 +96,6 @@ exports.deleteSection = async (req, res) => {
       },
     })
     const section = await Section.findById(sectionId)
-    console.log(sectionId, courseId)
     if (!section) {
       return res.status(404).json({
         success: false,

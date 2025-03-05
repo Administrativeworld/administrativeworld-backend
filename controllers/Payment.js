@@ -1,15 +1,15 @@
-const { instance } = require("../config/razorpay");
-const Course = require("../models/Course");
-const crypto = require("crypto");
-const User = require("../models/UserModel");
-const mailSender = require("../utils/mailSender");
-const mongoose = require("mongoose");
-const { courseEnrollmentEmail } = require("../mail/templates/courseEnrollmentEmail");
-const { paymentSuccessEmail } = require("../mail/templates/paymentSuccessEmail");
-const CourseProgress = require("../models/CourseProgress");
+import { instance } from "../config/razorpay.js";
+import Course from "../models/Course.js";
+import crypto from "crypto";
+import User from "../models/UserModel.js";
+import mailSender from "../utils/MailSender.js";
+import mongoose from "mongoose";
+import { courseEnrollmentEmail } from "../mail/templates/courseEnrollmentEmail.js";
+import { paymentSuccessEmail } from "../mail/templates/paymentSuccessEmail.js";
+import CourseProgress from "../models/CourseProgress.js";
 
 // Capture payment for a single course
-exports.capturePayment = async (req, res) => {
+export async function capturePayment(req, res) {
   const { courseId } = req.body;
   const userId = req.user.id;
 
@@ -49,10 +49,10 @@ exports.capturePayment = async (req, res) => {
     console.error(error);
     res.status(500).json({ success: false, message: "Could not initiate order." });
   }
-};
+}
 
 // Verify payment for a single course
-exports.verifyPayment = async (req, res) => {
+export async function verifyPayment(req, res) {
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature, courseId } = req.body;
   const userId = req.user.id;
 
@@ -72,7 +72,7 @@ exports.verifyPayment = async (req, res) => {
   }
 
   return res.status(400).json({ success: false, message: "Payment verification failed" });
-};
+}
 
 // Enroll the student in a single course
 const enrollStudent = async (courseId, userId) => {
@@ -114,7 +114,7 @@ const enrollStudent = async (courseId, userId) => {
 };
 
 // Send Payment Success Email
-exports.sendPaymentSuccessEmail = async (req, res) => {
+export async function sendPaymentSuccessEmail(req, res) {
   const { orderId, paymentId, amount } = req.body;
   const userId = req.user.id;
 
@@ -134,4 +134,4 @@ exports.sendPaymentSuccessEmail = async (req, res) => {
     console.error("Error in sending email:", error);
     res.status(400).json({ success: false, message: "Could not send email" });
   }
-};
+}

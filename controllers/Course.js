@@ -1,15 +1,15 @@
-const Course = require("../models/Course")
-const Category = require("../models/Category")
-const Section = require("../models/Section")
-const SubSection = require("../models/Subsection")
-const User = require("../models/UserModel")
-const CourseCreation = require("../models/CourseCreation")
-const { uploadImageToCloudinary } = require("../utils/ImageUpload")
-const CourseProgress = require("../models/CourseProgress")
-const { convertSecondsToDuration } = require("../utils/secToDuration")
-const mongoose = require("mongoose");
+import Course from "../models/Course.js";
+import Category from "../models/Category.js";
+import Section from "../models/Section.js";
+import SubSection from "../models/Subsection.js";
+import User from "../models/UserModel.js";
+import CourseCreation from "../models/CourseCreation.js";
+import uploadImageToCloudinary from "../utils/ImageUpload.js";
+import CourseProgress from "../models/CourseProgress.js";
+import convertSecondsToDuration from "../utils/secToDuration.js";
+import mongoose from "mongoose";
 
-exports.createCourse = async (req, res) => {
+export async function createCourse(req, res) {
   try {
     // Get user ID from request object
     const userId = req.user.id
@@ -31,9 +31,6 @@ exports.createCourse = async (req, res) => {
     // Convert the tag and instructions from stringified Array to Array
     const tag = JSON.parse(_tag)
     const instructions = JSON.parse(_instructions)
-
-    console.log("tag", tag)
-    console.log("instructions", instructions)
 
     // Check if any of the required fields are missing
     if (
@@ -133,7 +130,8 @@ exports.createCourse = async (req, res) => {
     })
   }
 }
-exports.getCourseCreation = async (req, res) => {
+
+export async function getCourseCreation(req, res) {
   try {
     const courseCreationDrafts = await CourseCreation.find()
       .populate({
@@ -158,7 +156,8 @@ exports.getCourseCreation = async (req, res) => {
     })
   }
 }
-exports.publishCourse = async (req, res) => {
+
+export async function publishCourse(req, res) {
   try {
     const { courseId } = req.body;
 
@@ -190,9 +189,10 @@ exports.publishCourse = async (req, res) => {
       error: error.message,
     });
   }
-};
+}
+
 // Edit Course Details
-exports.editCourse = async (req, res) => {
+export async function editCourse(req, res) {
   try {
     const { courseId } = req.body
     const updates = req.body
@@ -203,7 +203,6 @@ exports.editCourse = async (req, res) => {
     }
 
     if (req.files) {
-      console.log("thumbnail update")
       const thumbnail = req.files.thumbnailImage
       const thumbnailImage = await uploadImageToCloudinary(
         thumbnail,
@@ -257,8 +256,9 @@ exports.editCourse = async (req, res) => {
     })
   }
 }
+
 // Get Course List
-exports.getAllCourses = async (req, res) => {
+export async function getAllCourses(req, res) {
   try {
     let { page = 1, limit = 10, categoryIds } = req.body;
 
@@ -283,11 +283,14 @@ exports.getAllCourses = async (req, res) => {
 
     // Fetch courses
     const courses = await Course.find(filter)
-      .select("courseName price thumbnail instructor tag ratingAndReviews studentsEnrolled courseDescription")
-      .populate("instructor category")
+      .select("courseName price thumbnail instructor tag ratingAndReviews studentsEnroled courseDescription")
+      .populate("instructor") // Populate specific fields from instructor
+      .populate("studentsEnroled", "_id name") // Populate specific fields from studentsEnrolled
+      .populate("category", "_id name") // Only populate _id and name from category
       .skip((page - 1) * limit)
       .limit(limit)
       .exec();
+
 
     return res.status(200).json({
       success: true,
@@ -304,8 +307,9 @@ exports.getAllCourses = async (req, res) => {
       error: error.message,
     });
   }
-};
-exports.getACourse = async (req, res) => {
+}
+
+export async function getACourse(req, res) {
   try {
     const { courseId } = req.body; // Extract courseId properly
 
@@ -348,8 +352,9 @@ exports.getACourse = async (req, res) => {
       error: error.message,
     });
   }
-};
-exports.getCourseDetails = async (req, res) => {
+}
+
+export async function getCourseDetails(req, res) {
   try {
     const { courseId } = req.body
     const courseDetails = await Course.findOne({
@@ -410,12 +415,13 @@ exports.getCourseDetails = async (req, res) => {
     })
   }
 }
-exports.getFullCourseDetails = async (req, res) => {
+
+export async function getFullCourseDetails(req, res) {
   try {
     const { courseId } = req.body
     const userId = req.user.id
     const courseDetails = await Course.findOne({
-      _id: courseId,
+      _id: courseId, studentsEnroled: userId
     })
       .populate({
         path: "instructor",
@@ -438,7 +444,6 @@ exports.getFullCourseDetails = async (req, res) => {
       userId: userId,
     })
 
-    console.log("courseProgressCount : ", courseProgressCount)
 
     if (!courseDetails) {
       return res.status(400).json({
@@ -482,14 +487,8 @@ exports.getFullCourseDetails = async (req, res) => {
   }
 }
 
-
-
-
-
-
-
 // Delete the Course
-exports.deleteCourse = async (req, res) => {
+export async function deleteCourse(req, res) {
   try {
     const { courseId } = req.body
 

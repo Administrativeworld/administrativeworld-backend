@@ -1,10 +1,10 @@
-const mongoose = require("mongoose")
-const Section = require("../models/Section")
-const SubSection = require("../models/Subsection")
-const CourseProgress = require("../models/CourseProgress")
-const Course = require("../models/Course")
+import mongoose from "mongoose";
+import Section from "../models/Section.js";
+import SubSection from "../models/Subsection.js";
+import CourseProgress from "../models/CourseProgress.js";
+import Course from "../models/Course.js";
 
-exports.updateCourseProgress = async (req, res) => {
+export async function updateCourseProgress(req, res) {
   const { courseId, subsectionId } = req.body
   const userId = req.user.id
 
@@ -47,7 +47,7 @@ exports.updateCourseProgress = async (req, res) => {
   }
 }
 
-exports.getProgressPercentage = async (req, res) => {
+export async function getProgressPercentage(req, res) {
   const { courseId } = req.body
   const userId = req.user.id
 
@@ -74,7 +74,6 @@ exports.getProgressPercentage = async (req, res) => {
         .status(400)
         .json({ error: "Can not find Course Progress with these IDs." })
     }
-    console.log(courseProgress, userId)
     let lectures = 0
     courseProgress.courseID.courseContent?.forEach((sec) => {
       lectures += sec.subSection.length || 0

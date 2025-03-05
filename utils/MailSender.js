@@ -1,4 +1,4 @@
-const nodemailer = require("nodemailer")
+import nodemailer from "nodemailer";
 
 const mailSender = async (email, title, body) => {
   try {
@@ -17,7 +17,6 @@ const mailSender = async (email, title, body) => {
       subject: `${title}`, // Subject line
       html: `${body}`, // html body
     })
-    console.log(info.response)
     return info
   } catch (error) {
     console.log(error.message)
@@ -25,4 +24,4 @@ const mailSender = async (email, title, body) => {
   }
 }
 
-module.exports = mailSender
+export default mailSender;

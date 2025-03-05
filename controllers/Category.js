@@ -1,7 +1,7 @@
-const express = require('express');
-const Category = require('../models/Category');
+import express from 'express';
+import Category from '../models/Category.js';
 
-exports.createCategory = async (req, res) => {
+export async function createCategory(req, res) {
   try {
     const { name, description } = req.body;
     if (!name) {
@@ -25,7 +25,8 @@ exports.createCategory = async (req, res) => {
     })
   }
 }
-exports.showAllCategories = async (req, res) => {
+
+export async function showAllCategories(req, res) {
   try {
     const allCategories = await Category.find().select('name _id') // Populate courses
 
@@ -39,9 +40,9 @@ exports.showAllCategories = async (req, res) => {
       message: error.message,
     });
   }
-};
+}
 
-exports.categoryPageDetails = async (req, res) => {
+export async function categoryPageDetails(req, res) {
   try {
     const { categoryId } = req.body
 
@@ -54,17 +55,14 @@ exports.categoryPageDetails = async (req, res) => {
       })
       .exec()
 
-    console.log("SELECTED COURSE", selectedCategory)
     // Handle the case when the category is not found
     if (!selectedCategory) {
-      console.log("Category not found.")
       return res
         .status(404)
         .json({ success: false, message: "Category not found" })
     }
     // Handle the case when there are no courses
     if (selectedCategory.courses.length === 0) {
-      console.log("No courses found for the selected category.")
       return res.status(404).json({
         success: false,
         message: "No courses found for the selected category.",
@@ -83,7 +81,6 @@ exports.categoryPageDetails = async (req, res) => {
         match: { status: "Published" },
       })
       .exec()
-    console.log()
     // Get top-selling courses across all categories
     const allCategories = await Category.find()
       .populate({

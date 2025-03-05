@@ -1,9 +1,12 @@
-const User = require("../models/UserModel")
-const mailSender = require("../utils/mailSender")
-const bcrypt = require("bcrypt")
-const crypto = require("crypto")
-require("dotenv").config()
-exports.resetPasswordToken = async (req, res) => {
+import User from "../models/UserModel.js";
+import mailSender from "../utils/MailSender.js";
+import bcrypt from "bcrypt";
+import crypto from "crypto";
+import dotenv from "dotenv";
+dotenv.config();
+
+
+export async function resetPasswordToken(req, res) {
   try {
     const email = req.body.email
     const user = await User.findOne({ email: email })
@@ -23,7 +26,6 @@ exports.resetPasswordToken = async (req, res) => {
       },
       { new: true }
     )
-    console.log("DETAILS", updatedDetails)
 
     // const url = `http://localhost:3000/update-password/${token}`
     const url = `${process.env.FRONTEND_URL}/update-password/${token}`;
@@ -48,7 +50,7 @@ exports.resetPasswordToken = async (req, res) => {
   }
 }
 
-exports.resetPassword = async (req, res) => {
+export async function resetPassword(req, res) {
   try {
     const { password, confirmPassword, token } = req.body
 

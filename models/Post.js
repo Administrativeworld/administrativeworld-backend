@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const Category = require('./Category');
+import mongoose from 'mongoose';
+import Category from './Category.js';
 
 const postSchema = new mongoose.Schema({
     title:{
@@ -31,4 +31,4 @@ const postSchema = new mongoose.Schema({
      }
 })
 
-module.exports = mongoose.model("Post", postSchema)
+export default mongoose.model("Post", postSchema);

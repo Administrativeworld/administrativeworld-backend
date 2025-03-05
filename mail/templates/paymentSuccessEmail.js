@@ -1,4 +1,4 @@
-exports.paymentSuccessEmail = (name, amount, orderId, paymentId) => {
+export const paymentSuccessEmail = (name, amount, orderId, paymentId) => {
     return `<!DOCTYPE html>
       <html>
       
@@ -67,8 +67,8 @@ exports.paymentSuccessEmail = (name, amount, orderId, paymentId) => {
       
       <body>
           <div class="container">
-              <a href="https://studynotion-edtech-project.vercel.app"><img class="logo" src="https://i.ibb.co/7Xyj3PC/logo.png"
-                      alt="StudyNotion Logo"></a>
+              <img class="logo" src="https://res.cloudinary.com/tuhaniaji342cloud/image/upload/v1740144719/chatty_avatars/amgo5bzkpsuvm28g4wh3.png"
+                      alt="aw Logo"></a>
               <div class="message">Course Payment Confirmation</div>
               <div class="body">
                   <p>Dear ${name},</p>
@@ -82,4 +82,4 @@ exports.paymentSuccessEmail = (name, amount, orderId, paymentId) => {
       </body>
       
       </html>`
-  }
+}

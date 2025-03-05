@@ -1,16 +1,15 @@
-const { contactUsEmail } = require("../mail/templates/contactFormRes")
-const mailSender = require("../utils/mailSender")
+import { contactUsEmail } from "../mail/templates/contactFormRes.js";
+import mailSender from "../utils/MailSender.js";
 
-exports.contactUsController = async (req, res) => {
+export async function contactUsController(req, res) {
   const { email, firstname, lastname, message, phoneNo, countrycode } = req.body
-  console.log(req.body)
+
   try {
     const emailRes = await mailSender(
       email,
       "Your Data send successfully",
       contactUsEmail(email, firstname, lastname, message, phoneNo, countrycode)
     )
-    console.log("Email Res ", emailRes)
     return res.json({
       success: true,
       message: "Email send successfully",

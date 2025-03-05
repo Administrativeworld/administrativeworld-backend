@@ -1,9 +1,11 @@
-const mongoose = require("mongoose");
-require("dotenv").config();
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+dotenv.config();
+
 
 const { MONGODB_URL } = process.env;
 
-exports.connect = () => {
+export default function connect() {
 	mongoose
 		.connect(MONGODB_URL, {
 			// useNewUrlparser: true,
@@ -15,4 +17,4 @@ exports.connect = () => {
 			console.log(err);
 			process.exit(1);
 		});
-};
+}

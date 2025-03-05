@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const SubSectionSchema = new mongoose.Schema({
   title: { type: String, required: true },
@@ -8,4 +8,4 @@ const SubSectionSchema = new mongoose.Schema({
   videoType: { type: String, enum: ["YouTube", "Uploaded"], required: true },
 });
 
-module.exports = mongoose.model("SubSection", SubSectionSchema);
+export default mongoose.model("SubSection", SubSectionSchema);

@@ -1,181 +1,178 @@
-const bcrypt = require("bcrypt")
-const User = require("../models/UserModel")
-const OTP = require("../models/Otp")
-const jwt = require("jsonwebtoken")
-const otpGenerator = require("otp-generator")
-const mailSender = require("../utils/mailSender")
-const { passwordUpdated } = require("../mail/templates/passwordUpdate")
-const Profile = require("../models/Profile")
-require("dotenv").config()
+import bcrypt from "bcrypt";
+import User from "../models/UserModel.js";
+import OTP from "../models/Otp.js";
+import jwt from "jsonwebtoken";
+import otpGenerator from "otp-generator";
+import mailSender from "../utils/MailSender.js";
+import { passwordUpdated } from "../mail/templates/passwordUpdate.js";
+import Profile from "../models/Profile.js";
+import dotenv from "dotenv";
+dotenv.config();
+
 
 // Signup
-exports.signup = async (req, res) => {
-  try {
-    const {
-      firstName,
-      lastName,
-      email,
-      password,
-      confirmPassword,
-      contactNumber,
-      otp,
-    } = req.body;
+export async function signup(req, res) {
+  // try {
+  const {
+    firstName,
+    lastName,
+    email,
+    password,
+    confirmPassword,
+    contactNumber,
+    otp,
+  } = req.body;
 
-    if (
-      !firstName ||
-      !lastName ||
-      !email ||
-      !password ||
-      !confirmPassword ||
-      !otp
-    ) {
-      return res.status(422).json({
-        success: false,
-        message: "All fields are required",
-      });
-    }
-
-    if (password !== confirmPassword) {
-      return res.status(400).json({
-        success: false,
-        message: "Password and Confirm Password do not match. Please try again.",
-      });
-    }
-
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(409).json({
-        success: false,
-        message: "User already exists. Please sign in to continue.",
-      });
-    }
-
-    const response = await OTP.find({ email }).sort({ createdAt: -1 }).limit(1);
-    if (response.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "The OTP is not valid",
-      });
-    } else if (otp !== response[0].otp) {
-      return res.status(401).json({
-        success: false,
-        message: "The OTP is not valid",
-      });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    let approved = "";
-    approved === "Instructor" ? (approved = false) : (approved = true);
-
-    const profileDetails = await Profile.create({
-      gender: null,
-      dateOfBirth: null,
-      about: null,
-      contactNumber: null,
-    });
-
-    const user = await User.create({
-      firstName,
-      lastName,
-      email,
-      contactNumber,
-      password: hashedPassword,
-      approved: approved,
-      additionalDetails: profileDetails._id,
-      image: "",
-    });
-
-    return res.status(201).json({
-      success: true,
-      user,
-      message: "User registered successfully",
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
+  if (
+    !firstName ||
+    !lastName ||
+    !email ||
+    !password ||
+    !confirmPassword ||
+    !otp
+  ) {
+    return res.status(422).json({
       success: false,
-      message: "User cannot be registered. Please try again.",
+      message: "All fields are required",
     });
   }
-};
+
+  if (password !== confirmPassword) {
+    return res.status(400).json({
+      success: false,
+      message: "Password and Confirm Password do not match. Please try again.",
+    });
+  }
+
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    return res.status(409).json({
+      success: false,
+      message: "User already exists. Please sign in to continue.",
+    });
+  }
+
+  const response = await OTP.find({ email }).sort({ createdAt: -1 }).limit(1);
+  if (response.length === 0) {
+    return res.status(404).json({
+      success: false,
+      message: "The OTP is not valid",
+    });
+  } else if (otp !== response[0].otp) {
+    return res.status(401).json({
+      success: false,
+      message: "The OTP is not valid",
+    });
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  let approved = "";
+  approved === "Instructor" ? (approved = false) : (approved = true);
+
+  const profileDetails = await Profile.create({
+    gender: null,
+    dateOfBirth: null,
+    about: null,
+    contactNumber: null,
+  });
+
+  const user = await User.create({
+    firstName,
+    lastName,
+    email,
+    contactNumber,
+    password: hashedPassword,
+    approved: approved,
+    additionalDetails: profileDetails._id,
+    image: "",
+  });
+
+  return res.status(201).json({
+    success: true,
+    user,
+    message: "User registered successfully",
+  });
+  // } catch (error) {
+  //   console.error(error);
+  //   return res.status(500).json({
+  //     success: false,
+  //     message: "User cannot be registered. Please try again.",
+  //   });
+  // }
+}
 
 // Login
-exports.login = async (req, res) => {
+export async function login(req, res) {
   try {
-    // Get email and password from request body
-    const { email, password } = req.body
+    const { email, password } = req.body;
 
-    // Check if email or password is missing
     if (!email || !password) {
-      // Return 400 Bad Request status code with error message
       return res.status(400).json({
         success: false,
-        message: `Please Fill up All the Required Fields`,
-      })
+        message: "Please fill in all the required fields",
+      });
     }
 
-    // Find user with provided email
-    const user = await User.findOne({ email }).populate("additionalDetails")
+    const user = await User.findOne({ email }).populate("additionalDetails");
 
-    // If user not found with provided email
     if (!user) {
-      // Return 401 Unauthorized status code with error message
       return res.status(401).json({
         success: false,
-        message: `User is not Registered with Us Please SignUp to Continue`,
-      })
+        message: "User is not registered with us. Please sign up to continue.",
+      });
     }
 
-    // Generate JWT token and Compare Password
     if (await bcrypt.compare(password, user.password)) {
       const token = jwt.sign(
         { email: user.email, id: user._id, role: user.accountType },
         process.env.JWT_SECRET,
-        {
-          expiresIn: "24h",
-        }
-      )
+        { expiresIn: "24h" }
+      );
 
-      // Save token to user document in database
+      // Save token to user document
       await User.findOneAndUpdate(
         { email: email },
         { $set: { token: token } },
-        { new: true }, // This option returns the updated document
+        { new: true }
       );
 
-      // user.password = undefined
-      // Set cookie for token and return success response
+      // Cookie settings for web authentication
       const options = {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production", // Secure in production
-        sameSite: process.env.NODE_ENV === "production" ? "None" : "Strict", // Adjust for cross-domain if needed
-        path: "/", // Ensure the cookie is accessible throughout the app
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "None" : "Strict",
+        path: "/",
         maxAge: 24 * 60 * 60 * 1000, // 1 day
-      }
-      res.cookie("token", token, options).status(200).json({
+      };
+
+      // Always return the token in the response body
+      const responsePayload = {
         success: true,
-        token,
+        token, // Always return the token
         user,
-        message: `User Login Success`,
-      })
+        message: "User login successful",
+      };
+      return res.cookie("token", token, options).status(200).json(responsePayload);
+
     } else {
       return res.status(401).json({
         success: false,
-        message: `Password is incorrect`,
-      })
+        message: "Password is incorrect",
+      });
     }
   } catch (error) {
-    console.error(error)
-    // Return 500 Internal Server Error status code with error message
+    console.error(error);
     return res.status(500).json({
       success: false,
-      message: `Login Failure Please Try Again`,
-    })
+      message: "Login failure. Please try again.",
+    });
   }
 }
+
+
 // Send OTP For Email Verification
-exports.sendotp = async (req, res) => {
+export async function sendotp(req, res) {
   try {
     const { email } = req.body
 
@@ -218,7 +215,7 @@ exports.sendotp = async (req, res) => {
 }
 
 // Controller for Changing Password
-exports.changePassword = async (req, res) => {
+export async function changePassword(req, res) {
   try {
     // Get user data from req.user
     const userDetails = await User.findById(req.user.id)
@@ -280,3 +277,19 @@ exports.changePassword = async (req, res) => {
     })
   }
 }
+export const logout = async (req, res) => {
+  try {
+    res
+      .status(200)
+      .clearCookie("token", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "None" : "Strict",
+        path: "/",
+        maxAge: 0,
+      })
+      .json({ message: "Logout successful" });
+  } catch (error) {
+    res.status(500).json({ error: "Logout failed", details: error.message });
+  }
+};

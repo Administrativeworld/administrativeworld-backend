@@ -1,51 +1,33 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const { auth, isStudent, isAdmin } = require("../middleware/auth")
+import { auth, isStudent, isAdmin } from "../middleware/auth.js";
+
 // ************** category ****************************
-const {
-  showAllCategories,
-  createCategory,
-  categoryPageDetails,
-} = require('../controllers/Category')
-
-
-
+import { showAllCategories, createCategory, categoryPageDetails } from '../controllers/Category.js';
 
 // ************** COURSE IMPORTED ****************************
-const {
+import {
   createCourse,
   editCourse,
   getAllCourses,
   getCourseDetails,
   getFullCourseDetails,
-
   getCourseCreation,
   getACourse,
-  publishCourse
-} = require('../controllers/Course')
+  publishCourse,
+} from '../controllers/Course.js';
+
 // ************** SECCTION IMPORTED ****************************
-const {
-  createSection,
-  updateSection,
-  deleteSection,
-} = require("../controllers/Section")
+import { createSection, updateSection, deleteSection } from "../controllers/Section.js";
+
 // ************** SECCTION IMPORTED ****************************
-const {
-  createSubSection,
-  updateSubSection,
-  deleteSubSection,
-} = require("../controllers/Subsection")
+import { createSubSection, updateSubSection, deleteSubSection } from "../controllers/Subsection.js";
+
 // ************** Rating and review IMPORTED ****************************
-const {
-  createRating,
-  getAverageRating,
-  getAllRatingReview,
-} = require("../controllers/RatingandReview")
+import { createRating, getAverageRating, getAllRatingReview } from "../controllers/RatingandReview.js";
+
 // ************** COURSE PROGREES IMPORTED ****************************
-const {
-  updateCourseProgress,
-  getProgressPercentage,
-} = require("../controllers/courseProgress")
+import { updateCourseProgress, getProgressPercentage } from "../controllers/courseProgress.js";
 
 // ************** CATEGORY ROUTES FOR ADMIN ****************************
 router.post("/createCategory", auth, isAdmin, createCategory)
@@ -103,4 +85,4 @@ router.post("/getProgressPercentage", auth, isStudent, getProgressPercentage)
 
 
 
-module.exports = router;
+export default router;

@@ -1,10 +1,11 @@
 // Import necessary modules
-const Section = require("../models/Section")
-const SubSection = require("../models/Subsection")
-const { uploadImageToCloudinary } = require("../utils/ImageUpload")
+import Section from "../models/Section.js";
+
+import SubSection from "../models/Subsection.js";
+import uploadImageToCloudinary from "../utils/ImageUpload.js";
 
 // Create a new sub-section for a given section
-exports.createSubSection = async (req, res) => {
+export async function createSubSection(req, res) {
   try {
       const { sectionId, title, description, videoUrl, timeDuration } = req.body;
       let videoDetails = { secure_url: null, duration: null };
@@ -55,9 +56,9 @@ exports.createSubSection = async (req, res) => {
           error: error.message,
       });
   }
-};
+}
 
-exports.updateSubSection = async (req, res) => {
+export async function updateSubSection(req, res) {
   try {
       const { sectionId, subSectionId, title, description, videoUrl, timeDuration } = req.body;
       const subSection = await SubSection.findById(subSectionId);
@@ -97,9 +98,9 @@ exports.updateSubSection = async (req, res) => {
           message: "An error occurred while updating the section",
       });
   }
-};
+}
 
-exports.deleteSubSection = async (req, res) => {
+export async function deleteSubSection(req, res) {
   try {
     const { subSectionId, sectionId } = req.body
     await Section.findByIdAndUpdate(
