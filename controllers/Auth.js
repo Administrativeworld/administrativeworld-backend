@@ -11,17 +11,17 @@ dotenv.config();
 
 
 // Signup
-exports.signup = async (req, res) => {
-  try {
-    const {
-      firstName,
-      lastName,
-      email,
-      password,
-      confirmPassword,
-      contactNumber,
-      otp,
-    } = req.body;
+export async function signup(req, res) {
+  // try {
+  const {
+    firstName,
+    lastName,
+    email,
+    password,
+    confirmPassword,
+    contactNumber,
+    otp,
+  } = req.body;
 
   if (
     !firstName ||
@@ -88,19 +88,19 @@ exports.signup = async (req, res) => {
     image: "",
   });
 
-    return res.status(201).json({
-      success: true,
-      user,
-      message: "User registered successfully",
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      success: false,
-      message: "User cannot be registered. Please try again.",
-    });
-  }
-};
+  return res.status(201).json({
+    success: true,
+    user,
+    message: "User registered successfully",
+  });
+  // } catch (error) {
+  //   console.error(error);
+  //   return res.status(500).json({
+  //     success: false,
+  //     message: "User cannot be registered. Please try again.",
+  //   });
+  // }
+}
 
 // Login
 export async function login(req, res) {

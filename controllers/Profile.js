@@ -43,7 +43,7 @@ export async function updateProfile(req, res) {
 
     if (gender) profileUpdates.gender = gender;
     if (about) profileUpdates.about = about;
-    if (contactNumber) profileUpdates.contactNumber = contactNumber;
+    if (contactNumber) userUpdates.contactNumber = contactNumber;
 
     // Save the dateOfBirth as a string in DD.MM.YYYY format
     if (dateOfBirth) {

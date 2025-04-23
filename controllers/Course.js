@@ -194,68 +194,81 @@ export async function publishCourse(req, res) {
 // Edit Course Details
 export async function editCourse(req, res) {
   try {
-    const { courseId } = req.body
-    const updates = req.body
+    // Ensure only Admins can update the course
+    if (req.user.accountType !== "Admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized: Only admins can edit courses",
+      })
+    }
+
+    const {
+      courseId,
+      courseName,
+      whatYouWillLearn,
+      price,
+      couponCode,
+      thumbnail,
+      tag: _tag,
+      category,
+      instructions: _instructions,
+    } = req.body
+
+    // Validate course existence
     const course = await Course.findById(courseId)
-
     if (!course) {
-      return res.status(404).json({ error: "Course not found" })
+      return res.status(480).json({
+        success: false,
+        message: "Course not found",
+      })
     }
 
-    if (req.files) {
-      const thumbnail = req.files.thumbnailImage
-      const thumbnailImage = await uploadImageToCloudinary(
-        thumbnail,
-        process.env.FOLDER_NAME
-      )
-      course.thumbnail = thumbnailImage.secure_url
-    }
-
-    for (const key in updates) {
-      if (updates.hasOwnProperty(key)) {
-        if (key === "tag" || key === "instructions") {
-          course[key] = JSON.parse(updates[key])
-        } else {
-          course[key] = updates[key]
-        }
+    // Validate category existence if provided
+    if (category) {
+      const categoryExists = await Category.findById(category)
+      if (!categoryExists) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid category ID",
+        })
       }
     }
 
-    await course.save()
+    // Convert comma-separated strings to arrays
+    const tag = _tag ? _tag.split(",").map((item) => item.trim()) : []
+    const instructions = _instructions ? _instructions.split(",").map((item) => item.trim()) : []
 
-    const updatedCourse = await Course.findOne({
-      _id: courseId,
-    })
-      .populate({
-        path: "instructor",
-        populate: {
-          path: "additionalDetails",
-        },
-      })
-      .populate("category")
-      .populate("ratingAndReviews")
-      .populate({
-        path: "courseContent",
-        populate: {
-          path: "subSection",
-        },
-      })
-      .exec()
+    // Update only provided fields
+    const updateFields = {}
+    if (courseName) updateFields.courseName = courseName
+    if (whatYouWillLearn) updateFields.whatYouWillLearn = whatYouWillLearn
+    if (price !== undefined) updateFields.price = price
+    if (couponCode !== undefined) updateFields.couponCode = couponCode
+    if (thumbnail) updateFields.thumbnail = thumbnail
+    if (_tag) updateFields.tag = tag
+    if (_instructions) updateFields.instructions = instructions
+    if (category) updateFields.category = category
 
-    res.json({
+    // Update the course
+    const updatedCourse = await Course.findByIdAndUpdate(courseId, updateFields, {
+      new: true,
+    }).populate("category")
+
+    return res.status(200).json({
       success: true,
       message: "Course updated successfully",
       data: updatedCourse,
     })
   } catch (error) {
-    console.error(error)
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Internal server error",
-      error: error.message,
+      message: `Error updating course: ${error.message}`,
     })
   }
 }
+
+
+
 
 // Get Course List
 export async function getAllCourses(req, res) {
@@ -420,9 +433,16 @@ export async function getFullCourseDetails(req, res) {
   try {
     const { courseId } = req.body
     const userId = req.user.id
-    const courseDetails = await Course.findOne({
-      _id: courseId, studentsEnroled: userId
-    })
+
+    // Create a base query that will be modified based on user type
+    let courseQuery = { _id: courseId }
+
+    // Only apply the enrollment check if user is not an Admin
+    if (req.user.accountType !== "Admin") {
+      courseQuery.studentsEnroled = userId
+    }
+
+    const courseDetails = await Course.findOne(courseQuery)
       .populate({
         path: "instructor",
         populate: {
@@ -444,7 +464,6 @@ export async function getFullCourseDetails(req, res) {
       userId: userId,
     })
 
-
     if (!courseDetails) {
       return res.status(400).json({
         success: false,
@@ -452,7 +471,7 @@ export async function getFullCourseDetails(req, res) {
       })
     }
 
-    if (courseDetails.status === "Draft") {
+    if (courseDetails.status === "Draft" && req.user.accountType !== "Admin") {
       return res.status(403).json({
         success: false,
         message: `Accessing a draft course is forbidden`,

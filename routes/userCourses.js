@@ -37,7 +37,7 @@ router.post("/getCategoryPageDetails", auth, isAdmin, categoryPageDetails)
 // ************** COURSE FOR ADMIN ****************************
 router.post("/createCourse", auth, isAdmin, createCourse)
 // Edit a course
-router.post("/editCourse", auth, isAdmin, editCourse)
+router.post("/editCourse", auth, editCourse)
 router.post("/publishCourse", auth, publishCourse)
 router.get("/courseCreationDraft", auth, getCourseCreation)
 
