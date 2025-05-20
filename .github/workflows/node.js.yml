@@ -3,7 +3,7 @@ name: Deploy to EC2 on Push
 on:
   push:
     branches:
-      - main  # or master or your deployment branch
+      - main
 
 jobs:
   deploy:
@@ -18,7 +18,7 @@ jobs:
         mkdir -p ~/.ssh
         echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+        ssh-keyscan -H $(echo ${{ secrets.EC2_HOST }} | cut -d@ -f2) >> ~/.ssh/known_hosts
 
     - name: Deploy code to EC2 and restart app
       run: |
