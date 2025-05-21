@@ -59,7 +59,7 @@ const io = new Server(server, {
 	}
 });
 // Somewhere in your Express app file
-import { routers } from './mediaSoup/mediaSoupServer.js';
+// import { routers } from './mediaSoup/mediaSoupServer.js';
 
 app.get("/rtpCapabilities/:courseId", (req, res) => {
 	const { courseId } = req.params;
