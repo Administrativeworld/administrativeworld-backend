@@ -41,6 +41,7 @@ import userProfile from './routes/Profile.js';
 import Post from './routes/PostRoutes.js';
 import userContact from './routes/Contack.js';
 import userPayment from './routes/Payment.js';
+import generate from './routes/Generate.js';
 
 app.use("/api/v1/auth", userRoutes);
 app.use("/api/v1/courses", userCourse);
@@ -48,6 +49,7 @@ app.use("/api/v1/profile", userProfile);
 app.use("/api/v1/contact", userContact);
 app.use("/api/v1/payment", userPayment);
 app.use("/api/v1/post", Post);
+app.use("/api/v1/generate", generate)
 
 // Create HTTP Server
 const server = createServer(app);
