@@ -194,11 +194,13 @@ export const handleGoogleCallback = (req, res) => {
 
     // Set cookie with token
     res.cookie("token", token, {
-      httpOnly: true,       // Prevents JS access
-      secure: true,         // Send only over HTTPS (important in production)
-      sameSite: "Lax",      // Adjust for cross-site scenarios
-      maxAge: 3 * 24 * 60 * 60 * 1000, // 3 days
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+      path: "/",
+      maxAge: 3 * 24 * 60 * 60 * 1000, // 3 days in milliseconds
     });
+
 
     return res.redirect(`${process.env.FRONTEND_URL}/home`); // No need to send token in URL
   } catch (error) {
