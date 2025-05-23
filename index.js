@@ -25,7 +25,7 @@ await cloudinaryConnect();
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-	origin: ['https://administrativeworld2.netlify.app', 'http://localhost:5173'],
+	origin: [process.env.FRONTEND_URL],
 	credentials: true,
 	methods: ['GET', 'POST', 'PUT', 'DELETE'],
 	allowedHeaders: ['Content-Type', 'Authorization'],
@@ -65,7 +65,7 @@ console.log('Google Callback URL:', process.env.GOOGLE_CALLBACK_URL);
 const server = createServer(app);
 const io = new Server(server, {
 	cors: {
-		origin: ['https://administrativeworld2.netlify.app', 'http://localhost:5173', process.env.FRONTEND_URL],
+		origin: [process.env.FRONTEND_URL],
 		methods: ['GET', 'POST', 'PUT', 'DELETE'],
 		credentials: true
 	}
