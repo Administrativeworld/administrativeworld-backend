@@ -200,7 +200,7 @@ export const handleGoogleCallback = (req, res) => {
       maxAge: 3 * 24 * 60 * 60 * 1000, // 3 days
     });
 
-    return res.redirect(`${process.env.FRONTEND_URL}home`); // No need to send token in URL
+    return res.redirect(`${process.env.FRONTEND_URL}/home`); // No need to send token in URL
   } catch (error) {
     console.error("Google OAuth Callback Error:", error);
     return res.status(500).json({
