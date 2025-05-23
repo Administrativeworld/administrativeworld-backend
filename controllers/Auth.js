@@ -127,8 +127,10 @@ export async function login(req, res) {
       const token = jwt.sign(
         { email: user.email, id: user._id, role: user.accountType },
         process.env.JWT_SECRET,
-        { expiresIn: "24h" }
+        { expiresIn: "3d" } // changed from "24h" to "3d"
       );
+
+
 
       // Save token to user document
       await User.findOneAndUpdate(
@@ -143,8 +145,9 @@ export async function login(req, res) {
         secure: process.env.NODE_ENV === "production",
         sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
         path: "/",
-        maxAge: 24 * 60 * 60 * 1000,
+        maxAge: 3 * 24 * 60 * 60 * 1000, // 3 days in milliseconds
       };
+
 
 
       // Always return the token in the response body
@@ -170,6 +173,52 @@ export async function login(req, res) {
     });
   }
 }
+
+export const handleGoogleCallback = (req, res) => {
+  console.log('Google Callback URL:', process.env.GOOGLE_CALLBACK_URL);
+  try {
+    const user = req.user;
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication failed. User not found.",
+      });
+    }
+
+    const token = jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "3d" }
+    );
+
+    // Set cookie with token
+    res.cookie("token", token, {
+      httpOnly: true,       // Prevents JS access
+      secure: true,         // Send only over HTTPS (important in production)
+      sameSite: "Lax",      // Adjust for cross-site scenarios
+      maxAge: 3 * 24 * 60 * 60 * 1000, // 3 days
+    });
+
+    return res.redirect("http://localhost:5173/home"); // No need to send token in URL
+  } catch (error) {
+    console.error("Google OAuth Callback Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong during authentication",
+    });
+  }
+};
+
+export const handleLogout = (req, res) => {
+  req.logout(err => {
+    if (err) {
+      console.error("Logout error:", err);
+      return res.status(500).send("Error logging out.");
+    }
+    res.redirect("/");
+  });
+};
 
 
 // Send OTP For Email Verification

@@ -9,7 +9,9 @@ import connect from './config/database.js';
 import { cloudinaryConnect } from "./config/cloudinary.js";
 import socketIoServer from './socket/socket.js';
 import { setupMediasoup } from './mediaSoup/mediaSoupServer.js'; // Import Mediasoup setup
-
+import passport from "passport";
+import session from "express-session";
+import "./config/passport.js";
 dotenv.config();
 
 // Initialize Express app
@@ -50,6 +52,14 @@ app.use("/api/v1/contact", userContact);
 app.use("/api/v1/payment", userPayment);
 app.use("/api/v1/post", Post);
 app.use("/api/v1/generate", generate)
+app.use(session({
+	secret: process.env.SESSION_SECRET,
+	resave: false,
+	saveUninitialized: false,
+}));
+app.use(passport.initialize());
+app.use(passport.session());
+console.log('Google Callback URL:', process.env.GOOGLE_CALLBACK_URL);
 
 // Create HTTP Server
 const server = createServer(app);

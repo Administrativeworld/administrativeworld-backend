@@ -1,4 +1,3 @@
-
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
@@ -15,16 +14,29 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      unique: true,
     },
     password: {
       type: String,
-      required: true,
+      required: function () {
+        // Only require password if it's NOT a Google OAuth user
+        return !this.googleId && this.provider === 'local';
+      }
+    },
+    googleId: {
+      type: String,
+      sparse: true, // Allows multiple null values
+    },
+    provider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
     },
     accountType: {
       type: String,
-      enum: ["Admin", "Student"],
+      enum: ["Admin", "Student", "Google"],
+      default: "Student",
       required: true,
-      default: "Student"
     },
     active: {
       type: Boolean,
@@ -36,7 +48,7 @@ const userSchema = new mongoose.Schema(
     },
     additionalDetails: {
       type: mongoose.Schema.Types.ObjectId,
-      required: true,
+      required: false,
       ref: "Profile",
     },
     courses: [
@@ -48,8 +60,8 @@ const userSchema = new mongoose.Schema(
     post: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Post"
-      }
+        ref: "Post",
+      },
     ],
     token: {
       type: String,
@@ -78,6 +90,6 @@ const userSchema = new mongoose.Schema(
     },
   },
   { timestamps: true }
-)
+);
 
 export default mongoose.model("user", userSchema);
