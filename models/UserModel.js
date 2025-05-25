@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema(
     lastName: {
       type: String,
       trim: true,
+      default: ' '
     },
     email: {
       type: String,
