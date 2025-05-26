@@ -228,7 +228,6 @@ export const handleLogout = (req, res) => {
 
 export const forgotPassword = async (req, res) => {
   const { email } = req.body;
-  console.log(req.body)
   const user = await User.findOne({
     email: email,
   });
@@ -267,7 +266,7 @@ export const forgotPassword = async (req, res) => {
     await mailSender(
       user.email,
       "Reset Your Password",
-      passwordResetLinkTemplate(resetLink, user.email)
+      passwordResetLinkTemplate(resetLink, email)
     );
   } catch (error) {
     console.error("Failed to send reset email:", error);
