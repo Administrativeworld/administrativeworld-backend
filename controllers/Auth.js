@@ -227,10 +227,10 @@ export const handleLogout = (req, res) => {
 };
 
 export const forgotPassword = async (req, res) => {
-  const { emailOrUsername } = req.body;
-
+  const { email } = req.body;
+  console.log(req.body)
   const user = await User.findOne({
-    $or: [{ email: emailOrUsername }, { username: emailOrUsername }],
+    email: email,
   });
 
   if (!user) {
@@ -263,11 +263,17 @@ export const forgotPassword = async (req, res) => {
 
   const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
 
-  await mailSender(
-    user.email,
-    "Reset Your Password",
-    passwordResetLinkTemplate(resetLink, user.email)
-  )
+  try {
+    await mailSender(
+      user.email,
+      "Reset Your Password",
+      passwordResetLinkTemplate(resetLink, user.email)
+    );
+  } catch (error) {
+    console.error("Failed to send reset email:", error);
+    return res.status(500).json({ message: "Failed to send reset email." });
+  }
+
 
 
   res.status(200).json({ message: "Reset link sent to email." });
