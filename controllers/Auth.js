@@ -233,7 +233,7 @@ export const forgotPassword = async (req, res) => {
   });
 
   if (!user) {
-    return res.status(200).json({ message: "If user exists, reset link sent." });
+    return res.status(200).json({ message: "email not sent" });
   }
 
   //check of PasswordResetToken availbale in Db
