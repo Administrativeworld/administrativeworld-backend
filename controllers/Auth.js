@@ -1,12 +1,16 @@
 import bcrypt from "bcrypt";
 import User from "../models/UserModel.js";
 import OTP from "../models/Otp.js";
+import crypto from "crypto";
+
 import jwt from "jsonwebtoken";
 import otpGenerator from "otp-generator";
 import mailSender from "../utils/MailSender.js";
+import passwordResetLinkTemplate from "../mail/templates/passwordResetLinkTemplate.js";
 import { passwordUpdated } from "../mail/templates/passwordUpdate.js";
 import Profile from "../models/Profile.js";
 import dotenv from "dotenv";
+import PasswordResetToken from "../models/PasswordResetToken.js";
 dotenv.config();
 
 
@@ -222,6 +226,89 @@ export const handleLogout = (req, res) => {
   });
 };
 
+export const forgotPassword = async (req, res) => {
+  const { emailOrUsername } = req.body;
+
+  const user = await User.findOne({
+    $or: [{ email: emailOrUsername }, { username: emailOrUsername }],
+  });
+
+  if (!user) {
+    return res.status(200).json({ message: "If user exists, reset link sent." });
+  }
+
+  //check of PasswordResetToken availbale in Db
+  const tokenInDb = await PasswordResetToken.findOne({ userId: user._id });
+  const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "15m" });
+
+  const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+  if (!tokenInDb) {
+    // Save to DB
+    await PasswordResetToken.create({
+      userId: user._id,
+      tokenHash,
+      expiresAt,
+      used: false
+    });
+  } else {
+    tokenInDb.tokenHash = tokenHash;
+    tokenInDb.expiresAt = expiresAt;
+    tokenInDb.used = false;
+    await tokenInDb.save();
+  }
+
+
+
+  const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+
+  await mailSender(
+    user.email,
+    "Reset Your Password",
+    passwordResetLinkTemplate(resetLink, user.email)
+  )
+
+
+  res.status(200).json({ message: "Reset link sent to email." });
+};
+
+export const resetPassword = async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+
+    const resetTokenRecord = await PasswordResetToken.findOne({
+      tokenHash,
+      userId: decoded.userId,
+      used: false,
+      expiresAt: { $gt: new Date() }
+    });
+
+    if (!resetTokenRecord) {
+      return res.status(400).json({ message: "Invalid or expired reset token." });
+    }
+
+    const user = await User.findById(decoded.userId);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+
+    resetTokenRecord.used = true;
+    await resetTokenRecord.save();
+    await mailSender(
+      user.email,
+      "Password Updated or Reset Success",
+      passwordUpdated(user.email, user.firstName)
+    )
+    return res.status(200).json({ message: "Password reset successful." });
+  } catch (err) {
+    return res.status(400).json({ message: "Invalid or expired token." });
+  }
+};
 
 // Send OTP For Email Verification
 export async function sendotp(req, res) {

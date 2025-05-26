@@ -4,9 +4,8 @@ import passport from "passport";
 const router = express.Router();
 
 // Import the required controllers and middleware functions
-import { login, signup, sendotp, changePassword, logout, handleGoogleCallback, handleLogout } from "../controllers/Auth.js";
+import { forgotPassword, login, signup, sendotp, logout, handleGoogleCallback, handleLogout, resetPassword } from "../controllers/Auth.js";
 
-import { resetPasswordToken, resetPassword } from "../controllers/resetPassword.js";
 import { auth } from "../middleware/auth.js";
 import welcome from "../controllers/welcome.js";
 
@@ -21,8 +20,8 @@ router.get("/logout", handleLogout);
 router.post("/login", login);
 router.post("/signup", signup);
 router.post("/sendotp", sendotp);
-router.post("/changepassword", auth, changePassword);
-router.post("/reset-password-token", resetPasswordToken);
+// router.post("/changepassword", auth, changePassword);
+router.post("/reset-password-token", forgotPassword);
 router.post("/reset-password", resetPassword);
 router.post("/logout", auth, logout)
 router.post("/validate", auth, (req, res) => {
