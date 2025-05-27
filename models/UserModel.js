@@ -45,6 +45,12 @@ const userSchema = new mongoose.Schema(
         ref: "Course",
       },
     ],
+    bookstore:[
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "bookstore"
+      }
+    ],
     post: [
       {
         type: mongoose.Schema.Types.ObjectId,

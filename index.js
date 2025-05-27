@@ -23,7 +23,7 @@ await cloudinaryConnect();
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-	origin: ['https://administrativeworld2.netlify.app', 'http://localhost:5173'],
+	origin: ['https://stellar-lebkuchen-66e1df.netlify.app', 'http://localhost:5173'],
 	credentials: true,
 	methods: ['GET', 'POST', 'PUT', 'DELETE'],
 	allowedHeaders: ['Content-Type', 'Authorization'],
@@ -41,6 +41,7 @@ import userProfile from './routes/Profile.js';
 import Post from './routes/PostRoutes.js';
 import userContact from './routes/Contack.js';
 import userPayment from './routes/Payment.js';
+import Bookstore from './routes/BookStoreRouter.js';
 
 app.use("/api/v1/auth", userRoutes);
 app.use("/api/v1/courses", userCourse);
@@ -48,12 +49,13 @@ app.use("/api/v1/profile", userProfile);
 app.use("/api/v1/contact", userContact);
 app.use("/api/v1/payment", userPayment);
 app.use("/api/v1/post", Post);
+app.use("/api/v1/bookstore", Bookstore);
 
 // Create HTTP Server
 const server = createServer(app);
 const io = new Server(server, {
 	cors: {
-		origin: ['https://administrativeworld2.netlify.app', 'http://localhost:5173'],
+		origin: ['https://stellar-lebkuchen-66e1df.netlify.app', 'http://localhost:5173'],
 		methods: ['GET', 'POST', 'PUT', 'DELETE'],
 		credentials: true
 	}
