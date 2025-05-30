@@ -227,55 +227,96 @@ export const handleLogout = (req, res) => {
 };
 
 export const forgotPassword = async (req, res) => {
+  console.log("Forgot password request received. Body:", req.body); // Log the entire request body
   const { email } = req.body;
-  const user = await User.findOne({
-    email: email,
-  });
+
+  if (!email) {
+    console.log("Email not provided in request body.");
+    return res.status(400).json({ message: "Email is required." });
+  }
+
+  const normalizedEmail = email.toLowerCase().trim();
+  console.log(`Searching for user with normalized email: '${normalizedEmail}'`);
+
+  let user;
+  try {
+    user = await User.findOne({
+      email: normalizedEmail, // Use normalized email for query
+    });
+  } catch (dbError) {
+    console.error("Error querying user from database:", dbError);
+    return res.status(500).json({ message: "Error accessing user data." });
+  }
 
   if (!user) {
+    console.log(`User not found for email: '${normalizedEmail}'. Sending 'email not sent' response.`);
+
     return res.status(200).json({ message: "email not sent" });
   }
 
-  //check of PasswordResetToken availbale in Db
-  const tokenInDb = await PasswordResetToken.findOne({ userId: user._id });
-  const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "15m" });
+  console.log(`User found: ${user._id}`);
 
-  const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
-  const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
-
-  if (!tokenInDb) {
-    // Save to DB
-    await PasswordResetToken.create({
-      userId: user._id,
-      tokenHash,
-      expiresAt,
-      used: false
-    });
-  } else {
-    tokenInDb.tokenHash = tokenHash;
-    tokenInDb.expiresAt = expiresAt;
-    tokenInDb.used = false;
-    await tokenInDb.save();
+  // Check if PasswordResetToken available in DB
+  let tokenInDb;
+  try {
+    tokenInDb = await PasswordResetToken.findOne({ userId: user._id });
+  } catch (dbError) {
+    console.error("Error querying PasswordResetToken from database:", dbError);
+    return res.status(500).json({ message: "Error accessing token data." });
   }
 
-
-
-  const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+  const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "15m" });
+  const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes from now
 
   try {
-    await mailSender(
-      user.email,
-      "Reset Your Password",
-      passwordResetLinkTemplate(resetLink, email)
-    );
-  } catch (error) {
-    console.error("Failed to send reset email:", error);
-    return res.status(500).json({ message: "Failed to send reset email." });
+    if (!tokenInDb) {
+      console.log(`No existing token found for user ${user._id}. Creating new token.`);
+      // Save to DB
+      await PasswordResetToken.create({
+        userId: user._id,
+        tokenHash,
+        expiresAt,
+        used: false
+      });
+      console.log(`New token created and saved for user ${user._id}.`);
+    } else {
+      console.log(`Existing token found for user ${user._id}. Updating token.`);
+      tokenInDb.tokenHash = tokenHash;
+      tokenInDb.expiresAt = expiresAt;
+      tokenInDb.used = false;
+      await tokenInDb.save();
+      console.log(`Token updated and saved for user ${user._id}.`);
+    }
+  } catch (dbError) {
+    console.error("Error saving PasswordResetToken to database:", dbError);
+    return res.status(500).json({ message: "Error saving reset token." });
   }
 
+  // It's crucial that FRONTEND_URL and JWT_SECRET are defined in your environment variables
+  if (!process.env.FRONTEND_URL || !process.env.JWT_SECRET) {
+    console.error("FRONTEND_URL or JWT_SECRET environment variable is not set!");
+    // Avoid sending email if crucial config is missing
+    return res.status(500).json({ message: "Server configuration error." });
+  }
 
+  const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+  console.log(`Generated reset link for user ${user._id}: ${resetLink}`);
 
-  res.status(200).json({ message: "Reset link sent to email." });
+  try {
+    console.log(`Attempting to send password reset email to: ${user.email}`);
+    await mailSender(
+      user.email, // Send to the email stored in the database (user.email)
+      "Reset Your Password",
+      passwordResetLinkTemplate(resetLink, user.email) // Pass user.email or normalizedEmail
+    );
+    console.log(`Password reset email sent successfully to: ${user.email}`);
+    res.status(200).json({ message: "Reset link sent to email." });
+  } catch (error) {
+    console.error(`Failed to send reset email to ${user.email}:`, error);
+    // Log the error but don't expose detailed error to client
+    return res.status(500).json({ message: "Failed to send reset email." });
+  }
 };
 
 export const resetPassword = async (req, res) => {
@@ -311,7 +352,7 @@ export const resetPassword = async (req, res) => {
     )
     return res.status(200).json({ message: "Password reset successful." });
   } catch (err) {
-    return res.status(400).json({ message: "Invalid or expired token." });
+    return res.status(400).json({ message: "Invalid or expired token.", error: err });
   }
 };
 
@@ -346,7 +387,7 @@ export async function sendotp(req, res) {
       })
     }
     const otpPayload = { email, otp }
-    const otpBody = await OTP.create(otpPayload)
+    await OTP.create(otpPayload)
     res.status(200).json({
       success: true,
       message: `OTP Sent Successfully`,
@@ -389,7 +430,7 @@ export async function changePassword(req, res) {
 
     // Send notification email
     try {
-      const emailResponse = await mailSender(
+      await mailSender(
         updatedUserDetails.email,
         "Password for your account has been updated",
         passwordUpdated(
