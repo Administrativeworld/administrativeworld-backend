@@ -74,7 +74,6 @@ export async function verifyPayment(req, res) {
   return res.status(400).json({ success: false, message: "Payment verification failed" });
 }
 
-// Enroll the student in a single course
 const enrollStudent = async (courseId, userId) => {
   try {
     const course = await Course.findByIdAndUpdate(
@@ -112,6 +111,59 @@ const enrollStudent = async (courseId, userId) => {
     throw new Error("Enrollment failed");
   }
 };
+
+// Enroll the student in a single course=
+export async function manualEnrollStudent(req, res) {
+  try {
+    const { courseId, email } = req.body;
+
+    const user = await User.findOne({ email: email });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const course = await Course.findByIdAndUpdate(
+      courseId,
+      { $addToSet: { studentsEnroled: user._id } },
+      { new: true }
+    );
+
+    if (!course) {
+      return res.status(404).json({ success: false, message: "Course not found" });
+    }
+
+    const courseProgress = await CourseProgress.create({
+      courseID: courseId,
+      userId: user._id,
+      completedVideos: [],
+    });
+
+    const student = await User.findByIdAndUpdate(
+      user._id,
+      {
+        $addToSet: { courses: courseId },
+        $push: { courseProgress: courseProgress._id }
+      },
+      { new: true }
+    );
+
+    await mailSender(
+      user.email,
+      `Successfully Manually Enrolled in ${course.courseName}`,
+      courseEnrollmentEmail(course.courseName, `${user.firstName} ${user.lastName}`)
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Student enrolled successfully",
+      data: student
+    });
+
+  } catch (error) {
+    console.error("Enrollment error:", error);
+    return res.status(500).json({ success: false, message: "Enrollment failed" });
+  }
+}
 
 // Send Payment Success Email
 export async function sendPaymentSuccessEmail(req, res) {
