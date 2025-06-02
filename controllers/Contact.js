@@ -1,25 +1,44 @@
 import { contactUsEmail } from "../mail/templates/contactFormRes.js";
+import { contactFormToAdmin } from "../mail/templates/contactFormToAdmin.js";
 import mailSender from "../utils/MailSender.js";
+import Contactus from "../models/Contactus.js";
 
 export async function contactUsController(req, res) {
-  const { email, firstname, lastname, message, phoneNo, countrycode } = req.body
+  const { email, fullname, message, phoneNo, subject } = req.body;
 
   try {
-    const emailRes = await mailSender(
+    // Save to DB
+    await Contactus.create({
       email,
-      "Your Data send successfully",
-      contactUsEmail(email, firstname, lastname, message, phoneNo, countrycode)
-    )
-    return res.json({
+      fullname,
+      message,
+      phoneNo,
+      subject,
+    });
+
+    // Send confirmation email
+    await mailSender(
+      email,
+      "Your data has been received",
+      contactUsEmail(email, fullname, message, phoneNo, subject)
+    );
+    let myemail = 'contactadworld01@gmail.com';
+    // Send form data to admin
+    await mailSender(
+      myemail,
+      "New Contact Form Submission",
+      contactFormToAdmin(email, fullname, message, phoneNo, subject)
+    );
+
+    return res.status(200).json({
       success: true,
-      message: "Email send successfully",
-    })
+      message: "Message submitted successfully",
+    });
   } catch (error) {
-    console.log("Error", error)
-    console.log("Error message :", error.message)
-    return res.json({
+    console.error("Error submitting contact form:", error);
+    return res.status(500).json({
       success: false,
-      message: "Something went wrong...",
-    })
+      message: "Something went wrong while submitting the message.",
+    });
   }
 }
