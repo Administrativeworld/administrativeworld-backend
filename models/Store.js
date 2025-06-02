@@ -12,7 +12,7 @@ const bookstoreSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ["Notes", "TestSeries", "Material","Books"],
+    enum: ["Notes", "TestSeries", "Material", "Books"],
     required: true
   },
   author: {
@@ -27,13 +27,37 @@ const bookstoreSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+
+  // 🖼️ Thumbnail info
   thumbnailUrl: {
     type: String
   },
+  thumbnail_public_id: {
+    type: String
+  },
+  thumbnail_format: {
+    type: String
+  },
+  thumbnail_bytes: {
+    type: Number
+  },
+
+  // 📄 PDF/download info
   downloadUrl: {
     type: String,
     required: true
   },
+  pdf_public_id: {
+    type: String
+  },
+  pdf_format: {
+    type: String
+  },
+  pdf_bytes: {
+    type: Number
+  },
+
+  // 📊 Reviews & purchases
   ratingAndReviews: [
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -41,16 +65,17 @@ const bookstoreSchema = new mongoose.Schema({
     },
   ],
   studentsPurchase: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        ref: "user",
-      },
-    ],
-  purchases: {
-        type: Number,
-        default: 0
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: "user",
     },
+  ],
+  purchases: {
+    type: Number,
+    default: 0
+  },
+
   status: {
     type: String,
     enum: ["Draft", "Published"],
