@@ -159,7 +159,8 @@ export const updateBook = async (req, res) => {
 // DELETE BOOK
 export const deleteBook = async (req, res) => {
   try {
-    const book = await Store.findById(req.params.id);
+    const book = await Store.findById(req.body.id);
+    console.log(req.body)
     if (!book) {
       return res.status(404).json({ success: false, message: "Book not found" });
     }

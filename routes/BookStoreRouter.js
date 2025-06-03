@@ -14,10 +14,10 @@ const router = express.Router();
 router.post("/capture", auth, isStudent, captureBookPayment);
 router.post("/verify", auth, isStudent, verifyBookPayment);
 
-router.get("/getAllBooks", auth, isAdmin, getAllBooks);
+router.post("/getAllBooks", getAllBooks);
 router.post("/createProduct", auth, isAdmin, createProduct);
-router.get("/getBookById", auth, isAdmin, getBookById);
+router.get("/getBookById", getBookById);
 router.put("/updateBook", auth, isAdmin, updateBook);
-router.delete("/deleteBook", auth, isAdmin, deleteBook);
+router.post("/deleteBook", auth, isAdmin, deleteBook);
 
 export default router;
