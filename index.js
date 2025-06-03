@@ -8,7 +8,7 @@ import fileUpload from "express-fileupload";
 import connect from './config/database.js';
 import { cloudinaryConnect } from "./config/cloudinary.js";
 import socketIoServer from './socket/socket.js';
-import { setupMediasoup } from './mediaSoup/mediaSoupServer.js'; // Import Mediasoup setup
+import { routers, setupMediasoup } from './mediaSoup/mediaSoupServer.js'; // Import Mediasoup setup
 import passport from "passport";
 import session from "express-session";
 import "./config/passport.js";
