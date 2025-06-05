@@ -58,6 +58,12 @@ const userSchema = new mongoose.Schema(
         ref: "Course",
       },
     ],
+    materials: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Store",
+      },
+    ],
     post: [
       {
         type: mongoose.Schema.Types.ObjectId,

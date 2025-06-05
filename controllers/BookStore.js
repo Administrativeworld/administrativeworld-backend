@@ -61,6 +61,8 @@ export const createProduct = async (req, res) => {
 // GET ALL BOOKS
 export const getAllBooks = async (req, res) => {
   try {
+    const accountType = req.user.accountType;
+
     const {
       page,
       limit,
@@ -96,9 +98,25 @@ export const getAllBooks = async (req, res) => {
 
     const totalPages = limitNumber ? Math.ceil(total / limitNumber) : 1;
 
+    // If student, sanitize the book fields
+    const sanitizedBooks =
+      accountType === "Student"
+        ? books.map((book) => {
+          const {
+            thumbnail_public_id,
+            thumbnail_bytes,
+            downloadUrl,
+            pdf_format,
+            pdf_bytes,
+            ...allowedFields
+          } = book.toObject(); // convert Mongoose doc to plain JS object
+          return allowedFields;
+        })
+        : books;
+
     res.status(200).json({
       success: true,
-      data: books,
+      data: sanitizedBooks,
       meta: {
         totalItems: total,
         currentPage: pageNumber || null,
@@ -118,10 +136,15 @@ export const getAllBooks = async (req, res) => {
   }
 };
 
+
 // GET SINGLE BOOK
 export const getBookById = async (req, res) => {
+  console.log("getBookById called ->>");
+
   try {
-    const book = await Store.findById(req.params.id)
+    const accountType = req.user.accountType; // Assuming `req.user` is set via auth middleware
+
+    const book = await Store.findById(req.body.id)
       .populate("ratingAndReviews")
       .populate("studentsPurchase", "name email");
 
@@ -129,12 +152,25 @@ export const getBookById = async (req, res) => {
       return res.status(404).json({ success: false, message: "Book not found" });
     }
 
-    res.status(200).json({ success: true, data: book });
+    const {
+      thumbnail_public_id,
+      thumbnail_bytes,
+      downloadUrl,
+      pdf_format,
+      pdf_bytes,
+      ...filteredBook
+    } = book.toObject();
+
+    res.status(200).json({
+      success: true,
+      data: filteredBook,
+    });
   } catch (error) {
     console.error("Get Book By ID Error:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 // UPDATE BOOK
 export const updateBook = async (req, res) => {
@@ -175,3 +211,4 @@ export const deleteBook = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+

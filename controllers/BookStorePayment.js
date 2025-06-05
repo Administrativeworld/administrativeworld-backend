@@ -60,7 +60,7 @@ export const verifyBookPayment = async (req, res) => {
     );
 
     await User.findByIdAndUpdate(userId, {
-      $push: { Store: bookId }, 
+      $push: { materials: bookId },
     });
 
     const user = await User.findById(userId);

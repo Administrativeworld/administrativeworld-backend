@@ -4,7 +4,6 @@ import Section from "../models/Section.js";
 import SubSection from "../models/Subsection.js";
 import User from "../models/UserModel.js";
 import CourseCreation from "../models/CourseCreation.js";
-import uploadImageToCloudinary from "../utils/ImageUpload.js";
 import CourseProgress from "../models/CourseProgress.js";
 import convertSecondsToDuration from "../utils/secToDuration.js";
 import mongoose from "mongoose";
