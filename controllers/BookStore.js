@@ -61,7 +61,7 @@ export const createProduct = async (req, res) => {
 // GET ALL BOOKS
 export const getAllBooks = async (req, res) => {
   try {
-    const accountType = req.user.accountType;
+    // const accountType = req.user.accountType;
 
     const {
       page,
@@ -100,19 +100,18 @@ export const getAllBooks = async (req, res) => {
 
     // If student, sanitize the book fields
     const sanitizedBooks =
-      accountType === "Student"
-        ? books.map((book) => {
-          const {
-            thumbnail_public_id,
-            thumbnail_bytes,
-            downloadUrl,
-            pdf_format,
-            pdf_bytes,
-            ...allowedFields
-          } = book.toObject(); // convert Mongoose doc to plain JS object
-          return allowedFields;
-        })
-        : books;
+      books.map((book) => {
+        const {
+          thumbnail_public_id,
+          thumbnail_bytes,
+          downloadUrl,
+          pdf_format,
+          pdf_bytes,
+          ...allowedFields
+        } = book.toObject(); // convert Mongoose doc to plain JS object
+        return allowedFields;
+      })
+
 
     res.status(200).json({
       success: true,
