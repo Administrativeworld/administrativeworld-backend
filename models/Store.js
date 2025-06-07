@@ -64,13 +64,6 @@ const bookstoreSchema = new mongoose.Schema({
       ref: "RatingAndReview",
     },
   ],
-  studentsPurchase: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      required: true,
-      ref: "user",
-    },
-  ],
   purchases: {
     type: Number,
     default: 0

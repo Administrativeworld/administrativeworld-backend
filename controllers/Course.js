@@ -266,10 +266,7 @@ export async function editCourse(req, res) {
   }
 }
 
-
-
-
-// Get Course List
+// Get Course List - Updated to not populate studentsEnroled
 export async function getAllCourses(req, res) {
   try {
     let { page = 1, limit = 10, categoryIds } = req.body;
@@ -293,16 +290,14 @@ export async function getAllCourses(req, res) {
     const totalPages = Math.ceil(totalCourses / limit);
     if (page > totalPages) page = totalPages;
 
-    // Fetch courses
+    // Fetch courses without studentsEnroled population
     const courses = await Course.find(filter)
-      .select("courseName price thumbnail instructor tag ratingAndReviews studentsEnroled courseDescription")
-      .populate("instructor") // Populate specific fields from instructor
-      .populate("studentsEnroled", "_id name") // Populate specific fields from studentsEnrolled
+      .select("courseName price thumbnail instructor tag ratingAndReviews courseDescription")
+      .populate("instructor", "firstName lastName email") // Populate specific fields from instructor
       .populate("category", "_id name") // Only populate _id and name from category
       .skip((page - 1) * limit)
       .limit(limit)
       .exec();
-
 
     return res.status(200).json({
       success: true,
@@ -349,8 +344,6 @@ export async function getACourse(req, res) {
         }
       ]);
 
-
-
     if (!course) {
       return res.status(404).json({ message: "Course not found" });
     }
@@ -396,13 +389,6 @@ export async function getCourseDetails(req, res) {
       })
     }
 
-    // if (courseDetails.status === "Draft") {
-    //   return res.status(403).json({
-    //     success: false,
-    //     message: `Accessing a draft course is forbidden`,
-    //   });
-    // }
-
     let totalDurationInSeconds = 0
     courseDetails.courseContent.forEach((content) => {
       content.subSection.forEach((subSection) => {
@@ -428,20 +414,34 @@ export async function getCourseDetails(req, res) {
   }
 }
 
+// Updated getFullCourseDetails to check user's courses array instead of course's studentsEnroled
 export async function getFullCourseDetails(req, res) {
   try {
     const { courseId } = req.body
     const userId = req.user.id
 
-    // Create a base query that will be modified based on user type
-    let courseQuery = { _id: courseId }
-
-    // Only apply the enrollment check if user is not an Admin
+    // First, check if user has access to this course
     if (req.user.accountType !== "Admin") {
-      courseQuery.studentsEnroled = userId
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found",
+        });
+      }
+
+      const userCourseIds = user.courses.map(id => id.toString());
+      const hasAccess = userCourseIds.includes(courseId);
+
+      if (!hasAccess) {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied: You are not enrolled in this course",
+        });
+      }
     }
 
-    const courseDetails = await Course.findOne(courseQuery)
+    const courseDetails = await Course.findOne({ _id: courseId })
       .populate({
         path: "instructor",
         populate: {
@@ -505,7 +505,7 @@ export async function getFullCourseDetails(req, res) {
   }
 }
 
-// Delete the Course
+// Updated deleteCourse function
 export async function deleteCourse(req, res) {
   try {
     const { courseId } = req.body
@@ -516,13 +516,17 @@ export async function deleteCourse(req, res) {
       return res.status(404).json({ message: "Course not found" })
     }
 
-    // Unenroll students from the course
-    const studentsEnrolled = course.studentsEnroled
-    for (const studentId of studentsEnrolled) {
-      await User.findByIdAndUpdate(studentId, {
+    // Remove course from all users who have it in their courses array
+    await User.updateMany(
+      { courses: courseId },
+      {
         $pull: { courses: courseId },
-      })
-    }
+        $pull: { courseProgress: { $in: await CourseProgress.find({ courseID: courseId }).select('_id') } }
+      }
+    );
+
+    // Delete all course progress records for this course
+    await CourseProgress.deleteMany({ courseID: courseId });
 
     // Delete sections and sub-sections
     const courseSections = course.courseContent
@@ -540,6 +544,15 @@ export async function deleteCourse(req, res) {
       await Section.findByIdAndDelete(sectionId)
     }
 
+    // Remove course from category
+    await Category.updateOne(
+      { courses: courseId },
+      { $pull: { courses: courseId } }
+    );
+
+    // Delete any course creation records
+    await CourseCreation.deleteOne({ courseId: courseId });
+
     // Delete the course
     await Course.findByIdAndDelete(courseId)
 
@@ -554,5 +567,100 @@ export async function deleteCourse(req, res) {
       message: "Server error",
       error: error.message,
     })
+  }
+}
+
+// NEW: Get enrolled students for a course (for admin use)
+export async function getEnrolledStudents(req, res) {
+  try {
+    const { courseId } = req.body;
+
+    // Only allow admins to access this
+    if (req.user.accountType !== "Admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized: Only admins can view enrolled students",
+      });
+    }
+
+    if (!courseId) {
+      return res.status(400).json({
+        success: false,
+        message: "Course ID is required",
+      });
+    }
+
+    // Find all users who have this course in their courses array
+    const enrolledStudents = await User.find(
+      { courses: courseId },
+      { firstName: 1, lastName: 1, email: 1, createdAt: 1 }
+    );
+
+    // Get course details
+    const course = await Course.findById(courseId, { courseName: 1 });
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: "Course not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        courseName: course.courseName,
+        totalEnrolled: enrolledStudents.length,
+        students: enrolledStudents,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+}
+
+// NEW: Get user's enrolled courses
+export async function getUserEnrolledCourses(req, res) {
+  try {
+    const userId = req.user.id;
+
+    const user = await User.findById(userId).populate({
+      path: 'courses',
+      select: 'courseName courseDescription thumbnail price instructor category createdAt',
+      populate: [
+        {
+          path: 'instructor',
+          select: 'firstName lastName'
+        },
+        {
+          path: 'category',
+          select: 'name'
+        }
+      ]
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: user.courses,
+      message: 'User enrolled courses retrieved successfully'
+    });
+  } catch (error) {
+    console.error('Get User Enrolled Courses Error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while fetching enrolled courses',
+      error: error.message,
+    });
   }
 }

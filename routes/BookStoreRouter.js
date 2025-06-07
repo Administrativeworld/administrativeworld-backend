@@ -6,6 +6,8 @@ import {
   getBookById,
   updateBook,
   deleteBook,
+  generateStoreDownloadToken,
+  downloadWithToken,
 } from "../controllers/BookStore.js";
 import { auth, isAdmin, isStudent } from "../middleware/auth.js";
 
@@ -19,5 +21,7 @@ router.post("/createProduct", auth, isAdmin, createProduct);
 router.post("/getBookById", auth, getBookById);
 router.put("/updateBook", auth, isAdmin, updateBook);
 router.post("/deleteBook", auth, isAdmin, deleteBook);
+router.post("/generateStoreDownloadToken", auth, generateStoreDownloadToken)
+router.get('/download/:token', downloadWithToken);
 
 export default router;

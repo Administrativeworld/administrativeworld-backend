@@ -50,29 +50,48 @@ export const verifyBookPayment = async (req, res) => {
   }
 
   try {
-    const updatedBook = await Store.findByIdAndUpdate(
-      bookId,
+    // Get book details (without updating it)
+    const book = await Store.findById(bookId);
+
+    if (!book) {
+      return res.status(404).json({
+        success: false,
+        message: "Book not found"
+      });
+    }
+
+    // Update only user document with book purchase
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
       {
-        $push: { studentsPurchase: userId },
-        $inc: { purchases: 1 },
+        $addToSet: { materials: bookId },
       },
       { new: true }
     );
 
-    await User.findByIdAndUpdate(userId, {
-      $push: { materials: bookId },
-    });
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
 
-    const user = await User.findById(userId);
+    // Send purchase confirmation email
     await mailSender(
-      user.email,
+      updatedUser.email,
       "Purchase Confirmed",
-      `You have successfully purchased ${updatedBook.title}`
+      `You have successfully purchased ${book.title}`
     );
 
-    res.status(200).json({ success: true, message: "Payment verified and book purchased" });
+    res.status(200).json({
+      success: true,
+      message: "Payment verified and book purchased successfully"
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: "Failed to complete purchase" });
+    res.status(500).json({
+      success: false,
+      message: "Failed to complete purchase"
+    });
   }
 };

@@ -5,7 +5,7 @@ dotenv.config();
 
 export async function auth(req, res, next) {
 	try {
-		// Extracting JWT from request cookies, body or header
+		// Get JWT token from cookie, body, or Authorization header
 		const token =
 			req.cookies.token ||
 			req.body.token ||
@@ -20,20 +20,36 @@ export async function auth(req, res, next) {
 
 			const userDoc = await User.findById(decode.id)
 				.populate("additionalDetails")
-				.populate("courses")          // Add this
+				.populate({
+					path: "courses",
+					populate: {
+						path: "instructor", // populate instructor inside each course
+						model: "user", // explicitly mention model if needed
+						select: "firstName lastName _id",
+					},
+				})
+				.populate({
+					path: "courses",
+					populate: {
+						path: "category", // populate instructor inside each course
+						model: "Category", // explicitly mention model if needed
+						select: "name _id",
+					},
+				})
 				.populate({
 					path: "materials",
-					populate: {
-						path: "studentsPurchase",
-						select: "email _id", // only populate these fields
-					},
+					populate: [
+						{
+							path: "author", // populate author inside each material
+						}
+					],
 				});
+
 			req.user = userDoc;
+			next();
 		} catch (error) {
 			return res.status(401).json({ success: false, message: "Token is invalid" });
 		}
-
-		next();
 	} catch (error) {
 		return res.status(401).json({
 			success: false,
@@ -41,6 +57,7 @@ export async function auth(req, res, next) {
 		});
 	}
 }
+
 
 
 export async function isStudent(req, res, next) {

@@ -87,12 +87,8 @@ export const verifyPayment = async (req, res) => {
   session.startTransaction();
 
   try {
-    // Enroll student in course
-    const course = await Course.findByIdAndUpdate(
-      courseId,
-      { $addToSet: { studentsEnroled: userId } },
-      { new: true, session }
-    );
+    // Get course details (without updating it)
+    const course = await Course.findById(courseId).session(session);
 
     if (!course) {
       await session.abortTransaction();
@@ -109,7 +105,7 @@ export const verifyPayment = async (req, res) => {
       completedVideos: [],
     }], { session });
 
-    // Update user with course and progress
+    // Update user with course and progress (only updating user document)
     const student = await User.findByIdAndUpdate(
       userId,
       {
