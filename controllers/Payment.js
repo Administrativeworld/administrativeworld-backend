@@ -30,8 +30,17 @@ export const capturePayment = async (req, res) => {
       });
     }
 
-    const uid = new mongoose.Types.ObjectId(userId);
-    if (course.studentsEnroled.includes(uid)) {
+    // Get user to check if already enrolled
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    // Check if already enrolled - check user's courses array
+    if (user.courses && user.courses.includes(courseId)) {
       return res.status(409).json({
         success: false,
         message: "Student is already enrolled in this course"

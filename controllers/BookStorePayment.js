@@ -14,8 +14,12 @@ export const captureBookPayment = async (req, res) => {
     const book = await Store.findById(bookId);
     if (!book) return res.status(404).json({ success: false, message: "Book not found" });
 
-    // Check if already purchased
-    if (book.studentsPurchase.includes(userId)) {
+    // Get user to check if already purchased
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+    // Check if already purchased - check user's materials array
+    if (user.materials && user.materials.includes(bookId)) {
       return res.status(409).json({ success: false, message: "Already purchased" });
     }
 
