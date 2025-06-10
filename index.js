@@ -46,6 +46,7 @@ import userContact from './routes/Contack.js';
 import userPayment from './routes/Payment.js';
 import generate from './routes/Generate.js';
 import BookStoreRouter from './routes/BookStoreRouter.js';
+import MetaData from './routes/MetaData.js'
 
 app.use("/api/v1/auth", userRoutes);
 app.use("/api/v1/courses", userCourse);
@@ -55,6 +56,7 @@ app.use("/api/v1/payment", userPayment);
 app.use("/api/v1/post", Post);
 app.use("/api/v1/store", BookStoreRouter);
 app.use("/api/v1/generate", generate)
+app.use("/api/v1/metadata", MetaData)
 app.use(session({
 	secret: process.env.SESSION_SECRET,
 	resave: false,

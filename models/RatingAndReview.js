@@ -20,6 +20,6 @@ const ratingAndReviewSchema = new mongoose.Schema({
 		ref: "Course",
 		index: true,
 	},
-});
+}, { timestamps: true });
 
 export default mongoose.model("RatingAndReview", ratingAndReviewSchema);

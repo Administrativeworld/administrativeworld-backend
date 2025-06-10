@@ -9,6 +9,7 @@ import {
   updateDisplayPicture,
   getEnrolledCourses,
   adminDashboard,
+  deleteProfilePicture,
 } from "../controllers/Profile.js";
 
 // 
@@ -17,6 +18,7 @@ import {
 router.delete("/deleteProfile", auth, deleteAccount)
 router.put("/updateProfile", auth, updateProfile)
 router.get("/getUserDetails", auth, getAllUserDetails)
+router.post('/deleteProfilePicture', auth, deleteProfilePicture)
 // Get Enrolled Courses
 router.post("/getEnrolledCourses", auth, getEnrolledCourses)
 router.put("/updateDisplayPicture", auth, updateDisplayPicture)

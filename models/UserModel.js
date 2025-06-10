@@ -79,6 +79,18 @@ const userSchema = new mongoose.Schema(
     image: {
       type: String,
     },
+    image_public_id: {
+      type: String
+    },
+    image_format: {
+      type: String
+    },
+    image_resource_type: {
+      type: String
+    },
+    image_bytes: {
+      type: Number
+    },
     courseProgress: [
       {
         type: mongoose.Schema.Types.ObjectId,

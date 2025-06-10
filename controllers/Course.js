@@ -292,7 +292,7 @@ export async function getAllCourses(req, res) {
 
     // Fetch courses without studentsEnroled population
     const courses = await Course.find(filter)
-      .select("courseName price thumbnail instructor tag ratingAndReviews courseDescription")
+      .select("courseName price thumbnail instructor tag ratingAndReviews courseDescription avgRating")
       .populate("instructor", "firstName lastName email") // Populate specific fields from instructor
       .populate("category", "_id name") // Only populate _id and name from category
       .skip((page - 1) * limit)
@@ -660,6 +660,39 @@ export async function getUserEnrolledCourses(req, res) {
     return res.status(500).json({
       success: false,
       message: 'Server error while fetching enrolled courses',
+      error: error.message,
+    });
+  }
+}
+
+export async function getTopRatedCourses(req, res) {
+  const { num } = req.query;
+
+  try {
+    const allCourses = await Course.find()
+      .select("courseName price thumbnail instructor tag ratingAndReviews courseDescription avgRating")
+      .populate("instructor", "firstName lastName email") // Populate specific fields from instructor
+      .populate("category", "_id name")
+
+    // Sort by avgRating (default to 0 if undefined)
+    const sortedCourses = allCourses
+      .map(course => ({
+        ...course._doc,
+        avgRating: course.avgRating || 0,
+      }))
+      .sort((a, b) => b.avgRating - a.avgRating)
+      .slice(0, Number(num) || 5); // fallback to 5 if num not provided
+
+    return res.status(200).json({
+      success: true,
+      message: `Top ${num || 5} rated courses fetched successfully`,
+      data: sortedCourses,
+    });
+  } catch (error) {
+    console.error("Error fetching top-rated courses:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch top-rated courses",
       error: error.message,
     });
   }

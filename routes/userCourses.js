@@ -21,6 +21,7 @@ import {
   getCourseCreation,
   getACourse,
   publishCourse,
+  getTopRatedCourses,
 } from "../controllers/Course.js";
 
 // ************** SECCTION IMPORTED ****************************
@@ -42,7 +43,7 @@ import {
   createRating,
   getAverageRating,
   getAllRatingReview,
-} from "../controllers/RatingandReview.js";
+} from "../controllers/CourseRatingandReview.js";
 
 // ************** COURSE PROGREES IMPORTED ****************************
 import {
@@ -102,4 +103,5 @@ router.post("/updateCourseProgress", auth, isStudent, updateCourseProgress);
 // To get Course Progress
 router.post("/getProgressPercentage", auth, isStudent, getProgressPercentage);
 
+router.get('/getTopRatedCourses', getTopRatedCourses)
 export default router;

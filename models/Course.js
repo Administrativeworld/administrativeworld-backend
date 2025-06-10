@@ -23,6 +23,14 @@ const coursesSchema = new mongoose.Schema({
       ref: "RatingAndReview",
     },
   ],
+  avgRating: {
+    type: Number,
+    default: 0
+  },
+  purchases: {
+    type: Number,
+    default: 0
+  },
   price: {
     type: Number,
   },

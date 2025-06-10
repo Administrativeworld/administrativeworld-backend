@@ -131,7 +131,8 @@ export const verifyPayment = async (req, res) => {
         message: "Student not found"
       });
     }
-
+    course.purchases = (course.purchases || 0) + 1;
+    await course.save()
     await session.commitTransaction();
 
     // Send enrollment and payment success emails

@@ -3,6 +3,7 @@ import CourseProgress from "../models/CourseProgress.js";
 import Course from "../models/Course.js";
 import User from "../models/UserModel.js";
 import mongoose from "mongoose";
+import { cloudinary } from "../config/cloudinary.js";
 // Method for updating a profile
 const parseDate = (dateString) => {
   if (!dateString || typeof dateString !== "string") return null;
@@ -129,10 +130,18 @@ export async function getAllUserDetails(req, res) {
 
 export async function updateDisplayPicture(req, res) {
   try {
-    const { imageUrl } = req.body; // Expecting the URL from frontend
+    const {
+      image,
+      image_public_id,
+      image_resource_type,
+      image_format
+
+    } = req.body; // Expecting the URL from frontend
     const userId = req.user.id;
 
-    if (!imageUrl) {
+    if (!image || !image_public_id ||
+      !image_resource_type ||
+      !image_format) {
       return res.status(400).json({
         success: false,
         message: "Image URL is required",
@@ -141,7 +150,12 @@ export async function updateDisplayPicture(req, res) {
 
     const updatedProfile = await User.findByIdAndUpdate(
       userId, // No need to use `{ _id: userId }`
-      { image: imageUrl },
+      {
+        image,
+        image_public_id,
+        image_resource_type,
+        image_format
+      },
       { new: true }
     );
 
@@ -240,5 +254,37 @@ export async function adminDashboard(req, res) {
   } catch (error) {
     console.error(error)
     res.status(500).json({ message: "Server Error" })
+  }
+}
+
+export async function deleteProfilePicture(req, res) {
+  try {
+    console.log('deleteProfilePicture called -->')
+    const { publicId } = req.body;
+    const userId = req.user.id;
+
+    const user = await User.findById(userId);
+
+    if (!publicId || !user) {
+      return res.status(400).json({ success: false, message: "publicId and valid user are required" });
+    }
+
+    const result = await cloudinary.uploader.destroy(publicId);
+
+    if (result.result !== "ok") {
+      return res.status(400).json({ success: false, message: "Image not found or could not be deleted" });
+    }
+
+    // Correct way to clear user's image fields
+    user.image = "";
+    user.image_public_id = "";
+    user.image_resource_type = "";
+    user.image_format = "";
+
+    await user.save();
+
+    return res.status(200).json({ success: true, message: "Image deleted successfully", result });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to delete image", error: error.message });
   }
 }
