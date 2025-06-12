@@ -188,6 +188,119 @@ export const updateBook = async (req, res) => {
   }
 };
 
+// Assuming this is your Store model
+
+export const createBooksCombo = async (req, res) => {
+  try {
+    const {
+      comboTitle,
+      comboDescription,
+      includedMaterials,
+      comboPrice,
+      finalPrice,
+      isFree,
+      thumbnailUrl,
+      thumbnail_public_id,
+      thumbnail_format,
+      status
+    } = req.body.updatedFormData;
+
+    // Validate includedMaterials is a non-empty array
+    if (!Array.isArray(includedMaterials) || includedMaterials.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "At least one material must be included in the combo."
+      });
+    }
+
+    // Check if all includedMaterials are valid ObjectIds
+    for (let id of includedMaterials) {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid ObjectId: ${id}`
+        });
+      }
+    }
+
+    // Check if all ObjectIds exist in Store
+    const foundMaterials = await Store.find({ _id: { $in: includedMaterials } });
+    if (foundMaterials.length !== includedMaterials.length) {
+      return res.status(404).json({
+        success: false,
+        message: "Some included materials were not found in the store."
+      });
+    }
+
+    // Create the combo
+    const newCombo = await BookStoreCombo.create({
+      comboTitle,
+      comboDescription,
+      includedMaterials,
+      comboPrice,
+      finalPrice,
+      isFree,
+      thumbnailUrl,
+      thumbnail_public_id,
+      thumbnail_format,
+      status
+    });
+
+    // Add the new combo ID to each Store item's combo field
+    await Store.updateMany(
+      { _id: { $in: includedMaterials } },
+      { $addToSet: { combo: newCombo._id } } // Prevents duplicate combo IDs
+    );
+
+    return res.status(201).json({
+      success: true,
+      message: "Combo created successfully",
+      data: newCombo
+    });
+
+  } catch (error) {
+    console.error("Error creating combo:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+};
+
+
+export const getBookCombos = async (req, res) => {
+  try {
+    const combos = await BookStoreCombo.find()
+      .populate({
+        path: "includedMaterials",
+        model: "Store" // Replace with your actual model name if different
+      })
+      .sort({ createdAt: -1 }); // Optional: to get latest combos first
+
+    if (!combos || combos.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No combos found"
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Combos fetched successfully",
+      data: combos
+    });
+
+  } catch (error) {
+    console.error("Error fetching combos:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+};
+
 // DELETE BOOK
 export const deleteBook = async (req, res) => {
   try {
@@ -305,6 +418,8 @@ export const downloadWithToken = async (req, res) => {
 // Alternative implementation using axios (if you prefer)
 
 import axios from 'axios';
+import BookStoreCombo from "../models/BookStoreCombo.js";
+import mongoose from "mongoose";
 
 export const downloadWithTokenAxios = async (req, res) => {
   try {

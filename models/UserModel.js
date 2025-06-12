@@ -24,6 +24,18 @@ const userSchema = new mongoose.Schema(
         return !this.googleId && this.provider === 'local';
       }
     },
+    currentSession: {
+      token: String,
+      deviceInfo: {
+        userAgent: String,
+        ip: String,
+        deviceId: String, // unique device identifier
+        loginTime: Date,
+      }, isActive: {
+        type: Boolean,
+        default: false
+      },
+    },
     googleId: {
       type: String,
       sparse: true, // Allows multiple null values

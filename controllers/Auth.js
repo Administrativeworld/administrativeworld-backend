@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import User from "../models/UserModel.js";
 import OTP from "../models/Otp.js";
 import crypto from "crypto";
-
+import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import otpGenerator from "otp-generator";
 import mailSender from "../utils/MailSender.js";
@@ -107,10 +107,82 @@ export async function signup(req, res) {
 }
 
 // Login
+// export async function login(req, res) {
+//   try {
+//     const { email, password } = req.body;
+//     console.log("auth login called")
+//     if (!email || !password) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Please fill in all the required fields",
+//       });
+//     }
+
+//     const user = await User.findOne({ email }).populate("additionalDetails");
+
+//     if (!user) {
+//       return res.status(401).json({
+//         success: false,
+//         message: "User is not registered with us. Please sign up to continue.",
+//       });
+//     }
+
+//     if (await bcrypt.compare(password, user.password)) {
+//       const token = jwt.sign(
+//         { email: user.email, id: user._id, role: user.accountType },
+//         process.env.JWT_SECRET,
+//         { expiresIn: "3d" } // changed from "24h" to "3d"
+//       );
+
+
+
+//       // Save token to user document
+//       await User.findOneAndUpdate(
+//         { email: email },
+//         { $set: { token: token } },
+//         { new: true }
+//       );
+
+//       // Cookie settings for web authentication
+//       const options = {
+//         httpOnly: true,
+//         secure: process.env.NODE_ENV === "production",
+//         sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+//         path: "/",
+//         maxAge: 3 * 24 * 60 * 60 * 1000, // 3 days in milliseconds
+//       };
+
+
+
+//       // Always return the token in the response body
+//       const responsePayload = {
+//         success: true,
+//         token, // Always return the token
+//         user,
+//         message: "User login successful",
+//       };
+//       return res.cookie("token", token, options).status(200).json(responsePayload);
+
+//     } else {
+//       return res.status(401).json({
+//         success: false,
+//         message: "Password is incorrect",
+//       });
+//     }
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Login failure. Please try again.",
+//     });
+//   }
+// }
+
 export async function login(req, res) {
   try {
-    const { email, password } = req.body;
-    console.log("auth login called")
+    const { email, password, deviceId } = req.body; // Include deviceId from frontend
+    console.log("auth login called");
+
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -127,40 +199,70 @@ export async function login(req, res) {
       });
     }
 
+    // Validate password data before bcrypt comparison
+    if (!password || !user.password) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid password data",
+      });
+    }
+
     if (await bcrypt.compare(password, user.password)) {
+      // Generate new token
       const token = jwt.sign(
-        { email: user.email, id: user._id, role: user.accountType },
+        {
+          email: user.email,
+          id: user._id,
+          role: user.accountType,
+          sessionId: new mongoose.Types.ObjectId() // Unique session identifier
+        },
         process.env.JWT_SECRET,
-        { expiresIn: "3d" } // changed from "24h" to "3d"
+        { expiresIn: "3d" }
       );
 
+      // Get device information
+      const deviceInfo = {
+        userAgent: req.headers['user-agent'],
+        ip: req.ip || req.connection.remoteAddress,
+        deviceId: deviceId || req.headers['user-agent'], // Use provided deviceId or fallback
+        loginTime: new Date()
+      };
 
-
-      // Save token to user document
+      // Update user with new session (this invalidates previous session)
       await User.findOneAndUpdate(
         { email: email },
-        { $set: { token: token } },
+        {
+          $set: {
+            currentSession: {
+              token: token,
+              deviceInfo: deviceInfo,
+              isActive: true
+            }
+          }
+        },
         { new: true }
       );
 
-      // Cookie settings for web authentication
+      // Cookie settings
       const options = {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
         path: "/",
-        maxAge: 3 * 24 * 60 * 60 * 1000, // 3 days in milliseconds
+        maxAge: 3 * 24 * 60 * 60 * 1000, // 3 days
       };
 
-
-
-      // Always return the token in the response body
       const responsePayload = {
         success: true,
-        token, // Always return the token
+        token,
         user,
         message: "User login successful",
+        deviceInfo: {
+          loginTime: deviceInfo.loginTime,
+          deviceId: deviceInfo.deviceId
+        }
       };
+
       return res.cookie("token", token, options).status(200).json(responsePayload);
 
     } else {
@@ -178,7 +280,44 @@ export async function login(req, res) {
   }
 }
 
-export const handleGoogleCallback = (req, res) => {
+// export const handleGoogleCallback = (req, res) => {
+//   console.log('Google Callback URL:', process.env.GOOGLE_CALLBACK_URL);
+//   try {
+//     const user = req.user;
+
+//     if (!user) {
+//       return res.status(401).json({
+//         success: false,
+//         message: "Authentication failed. User not found.",
+//       });
+//     }
+
+//     const token = jwt.sign(
+//       { id: user._id, email: user.email },
+//       process.env.JWT_SECRET,
+//       { expiresIn: "3d" }
+//     );
+
+//     // Set cookie with token
+//     res.cookie("token", token, {
+//       httpOnly: true,
+//       secure: process.env.NODE_ENV === "production",
+//       sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+//       path: "/",
+//       maxAge: 3 * 24 * 60 * 60 * 1000, // 3 days in milliseconds
+//     });
+
+
+//     return res.redirect(`${process.env.FRONTEND_URL}/home`); // No need to send token in URL
+//   } catch (error) {
+//     console.error("Google OAuth Callback Error:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Something went wrong during authentication",
+//     });
+//   }
+// };
+export const handleGoogleCallback = async (req, res) => {
   console.log('Google Callback URL:', process.env.GOOGLE_CALLBACK_URL);
   try {
     const user = req.user;
@@ -191,22 +330,48 @@ export const handleGoogleCallback = (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user._id, email: user.email },
+      {
+        id: user._id,
+        email: user.email,
+        sessionId: new mongoose.Types.ObjectId()
+      },
       process.env.JWT_SECRET,
       { expiresIn: "3d" }
     );
 
-    // Set cookie with token
+    // Get device information
+    const deviceInfo = {
+      userAgent: req.headers['user-agent'],
+      ip: req.ip || req.connection.remoteAddress,
+      deviceId: req.headers['user-agent'], // You might want to generate this differently
+      loginTime: new Date()
+    };
+
+    // Update user with new session
+    await User.findByIdAndUpdate(
+      user._id,
+      {
+        $set: {
+          currentSession: {
+            token: token,
+            deviceInfo: deviceInfo,
+            isActive: true
+          }
+        }
+      },
+      { new: true }
+    );
+
+    // Set cookie
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
       path: "/",
-      maxAge: 3 * 24 * 60 * 60 * 1000, // 3 days in milliseconds
+      maxAge: 3 * 24 * 60 * 60 * 1000,
     });
 
-
-    return res.redirect(`${process.env.FRONTEND_URL}/home`); // No need to send token in URL
+    return res.redirect(`${process.env.FRONTEND_URL}/home`);
   } catch (error) {
     console.error("Google OAuth Callback Error:", error);
     return res.status(500).json({
@@ -215,7 +380,6 @@ export const handleGoogleCallback = (req, res) => {
     });
   }
 };
-
 export const handleLogout = (req, res) => {
   req.logout(err => {
     if (err) {
@@ -225,6 +389,7 @@ export const handleLogout = (req, res) => {
     res.redirect("/");
   });
 };
+
 
 export const forgotPassword = async (req, res) => {
   console.log("Forgot password request received. Body:", req.body); // Log the entire request body

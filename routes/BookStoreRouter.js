@@ -8,6 +8,8 @@ import {
   deleteBook,
   generateStoreDownloadToken,
   downloadWithToken,
+  createBooksCombo,
+  getBookCombos,
 } from "../controllers/BookStore.js";
 import { auth, isAdmin, isStudent } from "../middleware/auth.js";
 
@@ -23,5 +25,7 @@ router.put("/updateBook", auth, isAdmin, updateBook);
 router.post("/deleteBook", auth, isAdmin, deleteBook);
 router.post("/generateStoreDownloadToken", auth, generateStoreDownloadToken)
 router.get('/download/:token', downloadWithToken);
+router.post("/createBooksCombo", auth, isAdmin, createBooksCombo)
+router.get("/getBookCombos", getBookCombos)
 
 export default router;

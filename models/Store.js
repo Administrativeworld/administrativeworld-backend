@@ -23,6 +23,10 @@ const bookstoreSchema = new mongoose.Schema({
     required: true,
     default: 0
   },
+  combo: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "BookStoreCombo",
+  },
   isFree: {
     type: Boolean,
     default: false

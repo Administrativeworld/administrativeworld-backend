@@ -36,6 +36,7 @@ const coursesSchema = new mongoose.Schema({
   },
   couponCode: {
     type: String,
+
   },
   thumbnail: {
     type: String,
