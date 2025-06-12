@@ -2,6 +2,7 @@ import { instance } from "../config/razorpay.js";
 import Course from "../models/Course.js";
 import crypto from "crypto";
 import User from "../models/UserModel.js";
+import Coupon from "../models/CouponCode.js";
 import mailSender from "../utils/MailSender.js";
 import mongoose from "mongoose";
 import { courseEnrollmentEmail } from "../mail/templates/courseEnrollmentEmail.js";
@@ -11,7 +12,7 @@ import CourseProgress from "../models/CourseProgress.js";
 
 // Capture payment for a single course
 export const capturePayment = async (req, res) => {
-  const { courseId } = req.body;
+  const { courseId, couponCode } = req.body;
   const userId = req.user.id;
 
   if (!courseId) {
@@ -47,17 +48,52 @@ export const capturePayment = async (req, res) => {
       });
     }
 
+    let finalPrice = course.price;
+    if (couponCode) {
+      const coupon = await Coupon.findOne({ codeName: couponCode.toUpperCase() });
+
+      if (!coupon || !coupon.isActive) {
+        return res.status(400).json({ success: false, message: "Invalid or inactive coupon code" });
+      }
+
+      if (coupon.expirationDate && new Date() > coupon.expirationDate) {
+        return res.status(400).json({ success: false, message: "Coupon code expired" });
+      }
+
+      if (coupon.usedByUsers.includes(userId)) {
+        return res.status(400).json({ success: false, message: "Coupon already used by this user" });
+      }
+
+      if (coupon.whiteListedUsers.length > 0 && !coupon.whiteListedUsers.includes(userId)) {
+        return res.status(403).json({ success: false, message: "You are not allowed to use this coupon" });
+      }
+
+      if (coupon.discountType === "PercentOff") {
+        finalPrice = finalPrice - (finalPrice * (coupon.discountValue / 100));
+      } else if (coupon.discountType === "RupeesOff") {
+        finalPrice = finalPrice - coupon.discountValue;
+      }
+
+      if (finalPrice < 0) finalPrice = 0;
+    }
+
+    console.log("final price:", finalPrice);
+
     const options = {
-      amount: course.price * 100,
+      amount: Math.round(finalPrice * 100),
       currency: "INR",
       receipt: `${courseId.slice(0, 10)}_${Date.now()}`,
       notes: {
         courseId,
-        userId
+        userId,
+        couponCode: couponCode || "NONE"
       }
     };
 
     const paymentResponse = await instance.orders.create(options);
+
+
+    
 
     return res.status(200).json({
       success: true,
@@ -134,7 +170,10 @@ export const verifyPayment = async (req, res) => {
     course.purchases = (course.purchases || 0) + 1;
     await course.save()
     await session.commitTransaction();
-
+    await Coupon.findOneAndUpdate(
+      { codeName: couponCode },
+      { $addToSet: { usedByUsers: userId } }
+    );
     // Send enrollment and payment success emails
     try {
       await Promise.all([
