@@ -1,4 +1,6 @@
 export default function socketIoServer(io) {
+  
+  const connectedUsers = new Map();
   io.on("connection", (socket) => {
  
 
