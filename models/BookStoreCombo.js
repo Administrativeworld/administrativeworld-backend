@@ -64,8 +64,7 @@ const bookStoreComboSchema = new mongoose.Schema({
   },
   studentPurchases: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "user", // Referencing your bookstore items
-    required: true
+    ref: "user"
   },
   status: {
     type: String,
