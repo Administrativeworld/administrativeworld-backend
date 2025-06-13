@@ -58,6 +58,7 @@ export async function createSection(req, res) {
 export async function updateSection(req, res) {
   try {
     const { sectionName, sectionId, courseId } = req.body
+
     const section = await Section.findByIdAndUpdate(
       sectionId,
       { sectionName },
@@ -131,3 +132,56 @@ export async function deleteSection(req, res) {
     })
   }
 }
+
+export const fetchSections = async (req, res) => {
+  try {
+    const { courseId } = req.query;
+    console.log('fetchSections called -->')
+    console.log(req.body)
+
+    if (!courseId) {
+      return res.status(400).json({
+        success: false,
+        message: "Course ID is required"
+      });
+    }
+
+    // Nested population: courseContent -> subSection
+    const course = await Course.findById(courseId).populate({
+      path: "courseContent",
+      populate: {
+        path: "subSection"
+      }
+    });
+    console.log("section", course)
+
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: "Course not found"
+      });
+    }
+
+    const sections = course.courseContent.map((section, index) => ({
+      value: `item-${index + 1}`,
+      sectionName: section.sectionName,
+      subSection: section.subSection, // Now this will be populated
+      _id: section._id
+    }));
+
+    return res.status(200).json({
+      success: true,
+      message: "Sections fetched successfully",
+      data: sections
+    });
+
+  } catch (error) {
+    console.error("Error fetching sections:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+};
+

@@ -41,6 +41,18 @@ const coursesSchema = new mongoose.Schema({
   thumbnail: {
     type: String,
   },
+  thumbnail_public_id: {
+    type: String
+  },
+  thumbnail_format: {
+    type: String
+  },
+  thumbnail_resource_type: {
+    type: String
+  },
+  thumbnail_bytes: {
+    type: Number
+  },
   tag: {
     type: [String],
     required: true,

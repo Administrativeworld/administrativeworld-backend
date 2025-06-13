@@ -90,7 +90,7 @@ export async function updateSubSection(req, res) {
     // Return updated section
     const updatedSection = await Section.findById(sectionId).populate("subSection");
 
-    return res.json({ success: true, message: "Sub-section updated successfully", data: updatedSection });
+    return res.status(200).json({ success: true, message: "Sub-section updated successfully", data: updatedSection });
   } catch (error) {
     console.error("Error updating sub-section:", error);
     return res.status(500).json({
@@ -137,3 +137,49 @@ export async function deleteSubSection(req, res) {
     })
   }
 }
+
+export const fetchSubSections = async (req, res) => {
+  try {
+    // Get sectionId from query parameters
+    const { sectionId } = req.query;
+
+    // Validate sectionId
+    if (!sectionId) {
+      return res.status(400).json({
+        success: false,
+        message: "Section ID is required"
+      });
+    }
+
+    // Find the section and populate subSections
+    const section = await Section.findById(sectionId).populate({
+      path: 'subSection',
+      model: 'SubSection'
+    });
+
+    // Check if section exists
+    if (!section) {
+      return res.status(404).json({
+        success: false,
+        message: "Section not found"
+      });
+    }
+
+    // Return the subsections
+    return res.status(200).json({
+      success: true,
+      message: "SubSections fetched successfully",
+      data: {
+        subsections: section.subSection
+      }
+    });
+
+  } catch (error) {
+    console.error("Error fetching subsections:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+};

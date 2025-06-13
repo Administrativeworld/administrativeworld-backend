@@ -22,6 +22,7 @@ import {
   getACourse,
   publishCourse,
   getTopRatedCourses,
+  deleteCourseThumbnail,
 } from "../controllers/Course.js";
 
 // ************** SECCTION IMPORTED ****************************
@@ -29,6 +30,7 @@ import {
   createSection,
   updateSection,
   deleteSection,
+  fetchSections,
 } from "../controllers/Section.js";
 
 // ************** SECCTION IMPORTED ****************************
@@ -36,6 +38,7 @@ import {
   createSubSection,
   updateSubSection,
   deleteSubSection,
+  fetchSubSections,
 } from "../controllers/Subsection.js";
 
 // ************** Rating and review IMPORTED ****************************
@@ -60,14 +63,16 @@ router.post("/deleteCategory", auth, isAdmin, deleteCategory);
 
 // ************** COURSE FOR ADMIN ****************************
 router.post("/createCourse", auth, isAdmin, createCourse);
+router.post("/deleteCourseThumbnail", auth, isAdmin, deleteCourseThumbnail)
 // Edit a course
-router.post("/editCourse", auth, editCourse);
+router.post("/editCourse", auth, isAdmin, editCourse);
 router.post("/publishCourse", auth, publishCourse);
 router.get("/courseCreationDraft", auth, getCourseCreation);
 
 // ************** SECTION FOR ADMIN ****************************
 //Add a Section to a Course
 router.post("/addSection", auth, isAdmin, createSection);
+router.post("/fetchSections", auth, isAdmin, fetchSections)
 // Update a Section
 router.post("/updateSection", auth, isAdmin, updateSection);
 // Delete a Section
@@ -80,6 +85,7 @@ router.post("/addSubSection", auth, isAdmin, createSubSection);
 router.post("/updateSubSection", auth, isAdmin, updateSubSection);
 // Delete Sub Section
 router.post("/deleteSubSection", auth, isAdmin, deleteSubSection);
+router.post("/fetchSubSections", auth, isAdmin, fetchSubSections)
 
 // ************** COURSE FOR STUDENT ****************************
 // Get all Registered Courses

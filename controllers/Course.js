@@ -7,6 +7,7 @@ import CourseCreation from "../models/CourseCreation.js";
 import CourseProgress from "../models/CourseProgress.js";
 import convertSecondsToDuration from "../utils/secToDuration.js";
 import mongoose from "mongoose";
+import { cloudinary } from "../config/cloudinary.js";
 
 export async function createCourse(req, res) {
   try {
@@ -25,6 +26,10 @@ export async function createCourse(req, res) {
       instructions: _instructions,
       couponCode,
       thumbnail, // Now treating as a string
+      thumbnail_public_id,
+      thumbnail_format,
+      thumbnail_resource_type,
+      thumbnail_bytes
     } = req.body
 
     // Convert the tag and instructions from stringified Array to Array
@@ -82,6 +87,10 @@ export async function createCourse(req, res) {
       tag,
       category: categoryDetails._id,
       thumbnail, // Now storing as a string
+      thumbnail_public_id,
+      thumbnail_format,
+      thumbnail_resource_type,
+      thumbnail_bytes,
       status: status,
       instructions,
     })
@@ -189,7 +198,41 @@ export async function publishCourse(req, res) {
     });
   }
 }
+export async function deleteCourseThumbnail(req, res) {
+  try {
+    console.log('deleteCourseThumbnail called -->')
+    const { courseId } = req.body;
+    const userId = req.user.id;
 
+    const user = await User.findById(userId);
+    const course = await Course.findById(courseId)
+
+    if (!courseId || !user || course) {
+      return res.status(400).json({ success: false, message: "courseId and valid user are required" });
+    }
+    if (!course.thumbnail_public_id || course.thumbnail_public_id === "") {
+      return res.status(200).json({ success: true, message: "Image not found or could not be deleted" })
+    }
+    const result = await cloudinary.uploader.destroy(course.thumbnail_public_id);
+
+    if (result.result !== "ok") {
+      return res.status(400).json({ success: false, message: "Image not found or could not be deleted" });
+    }
+
+    // Correct way to clear user's image fields
+    course.thumbnail = "";
+    course.thumbnail_public_id = "";
+    course.thumbnail_resource_type = "";
+    course.thumbnail_format = "";
+    course.thumbnail_bytes = "";
+
+    await user.save();
+
+    return res.status(200).json({ success: true, message: "Image deleted successfully", result });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to delete image", error: error.message });
+  }
+}
 // Edit Course Details
 export async function editCourse(req, res) {
   try {
@@ -208,11 +251,16 @@ export async function editCourse(req, res) {
       price,
       couponCode,
       thumbnail,
+      thumbnail_public_id,
+      thumbnail_format,
+      thumbnail_resource_type,
+      thumbnail_bytes,
       tag: _tag,
       category,
       instructions: _instructions,
     } = req.body
-
+    console.log("edit Course called ->>")
+    console.log(req.body)
     // Validate course existence
     const course = await Course.findById(courseId)
     if (!course) {
@@ -247,6 +295,10 @@ export async function editCourse(req, res) {
     if (_tag) updateFields.tag = tag
     if (_instructions) updateFields.instructions = instructions
     if (category) updateFields.category = category
+    if (thumbnail_public_id) updateFields.thumbnail_public_id = thumbnail_public_id
+    if (thumbnail_format) updateFields.thumbnail_format = thumbnail_format
+    if (thumbnail_bytes) updateFields.thumbnail_bytes = thumbnail_bytes
+    if (thumbnail_resource_type) updateFields.thumbnail_resource_type = thumbnail_resource_type
 
     // Update the course
     const updatedCourse = await Course.findByIdAndUpdate(courseId, updateFields, {
