@@ -168,3 +168,15 @@ export const toggleCouponStatusByCodeName = async (req, res) => {
     res.status(500).json({ success: false, message: "Status toggle failed" });
   }
 };
+// controllers/CouponCode.js
+
+// Get all coupons (Admin)
+export const getAllCoupons = async (req, res) => {
+  try {
+    const coupons = await Coupon.find().sort({ createdAt: -1 }); // most recent first
+    res.status(200).json({ success: true, data: coupons });
+  } catch (error) {
+    console.error("Fetch All Coupons Error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch coupons" });
+  }
+};
