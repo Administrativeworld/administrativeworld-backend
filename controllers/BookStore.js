@@ -61,7 +61,84 @@ export const createProduct = async (req, res) => {
     });
   }
 };
+export async function deleteBookThumbnail(req, res) {
+  try {
+    console.log('deleteBookThumbnail called -->')
+    const { bookId } = req.body;
+    const userId = req.user.id;
 
+    const user = await User.findById(userId);
+    const book = await Store.findById(bookId);
+
+
+    // Fixed condition: should be !book instead of book
+    if (!bookId || !user || !book) {
+      return res.status(400).json({ success: false, message: "bookId and valid user are required" });
+    }
+
+    if (!book.thumbnail_public_id || book.thumbnail_public_id === "") {
+      return res.status(200).json({ success: true, message: "Thumbnail not found or already deleted" });
+    }
+
+    const result = await cloudinary.uploader.destroy(book.thumbnail_public_id);
+
+    if (result.result !== "ok") {
+      return res.status(400).json({ success: false, message: "Thumbnail not found or could not be deleted" });
+    }
+
+    // Clear thumbnail fields
+    book.thumbnailUrl = "";
+    book.thumbnail_public_id = "";
+    book.thumbnail_format = "";
+    book.thumbnail_bytes = "";
+
+    await book.save();
+
+    return res.status(200).json({ success: true, message: "Thumbnail deleted successfully", result });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to delete thumbnail", error: error.message });
+  }
+}
+
+export async function deleteBookPdf(req, res) {
+  try {
+    console.log('deleteBookPdf called -->');
+    const { bookId } = req.body;
+    const userId = req.user.id;
+
+    const user = await User.findById(userId);
+    const book = await Store.findById(bookId);
+
+    // Fixed condition: should be !book instead of book
+    if (!bookId || !user || !book) {
+      return res.status(400).json({ success: false, message: "bookId and valid user are required" });
+    }
+
+    // Fixed: check pdf_public_id instead of thumbnail_public_id
+    if (!book.pdf_public_id || book.pdf_public_id === "") {
+      return res.status(200).json({ success: true, message: "PDF not found or already deleted" });
+    }
+
+    const result = await cloudinary.uploader.destroy(book.pdf_public_id);
+
+    if (result.result !== "ok") {
+      return res.status(400).json({ success: false, message: "PDF not found or could not be deleted" });
+    }
+
+    // Clear PDF fields
+    book.downloadUrl = "";
+    book.pdf_public_id = "";
+    book.pdf_format = "";
+    book.pdf_bytes = "";
+
+    // Fixed: save the book object instead of captureBookPayment
+    await book.save();
+
+    return res.status(200).json({ success: true, message: "PDF deleted successfully", result });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to delete PDF", error: error.message });
+  }
+}
 // GET ALL BOOKS
 export const getAllBooks = async (req, res) => {
   try {
@@ -167,13 +244,92 @@ export const getBookById = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+export const getBookByIdAdmin = async (req, res) => {
+  console.log("getBookByIdAdmin called ->>");
 
+  try {
+    const book = await Store.findById(req.body.bookId)
+      .populate("ratingAndReviews");
+
+    if (!book) {
+      return res.status(404).json({
+        success: false,
+        message: "Book not found"
+      });
+    }
+
+    // Admin gets all book details including sensitive fields
+    const bookData = book.toObject();
+
+    // Optional: Add additional admin-specific metadata
+    const adminBookDetails = {
+      ...bookData,
+      adminMetadata: {
+        createdAt: bookData.createdAt,
+        updatedAt: bookData.updatedAt,
+        totalFields: Object.keys(bookData).length,
+        hasDownloadUrl: !!bookData.downloadUrl,
+        hasThumbnail: !!bookData.thumbnail_public_id,
+        pdfSize: bookData.pdf_bytes ? `${(bookData.pdf_bytes / 1024 / 1024).toFixed(2)} MB` : 'Unknown',
+        thumbnailSize: bookData.thumbnail_bytes ? `${(bookData.thumbnail_bytes / 1024).toFixed(2)} KB` : 'Unknown'
+      }
+    };
+
+    res.status(200).json({
+      success: true,
+      data: adminBookDetails,
+      message: "Book details retrieved successfully (Admin view)"
+    });
+
+  } catch (error) {
+    console.error("Admin Get Book By ID Error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+};
 // UPDATE BOOK
 export const updateBook = async (req, res) => {
   try {
+    const {
+      title,
+      description,
+      type,
+      author,
+      price,
+      isFree = false,
+      thumbnailUrl,
+      downloadUrl,
+      status,
+      thumbnail_public_id,
+      pdf_public_id,
+      thumbnail_format,
+      pdf_format,
+      thumbnail_bytes,
+      pdf_bytes,
+    } = req.body;
+    console.log("update book called -->")
     const updatedBook = await Store.findByIdAndUpdate(
-      req.params.id,
-      req.body,
+      req.query.bookId,
+      {
+        title,
+        description,
+        type,
+        author,
+        price,
+        isFree,
+        thumbnailUrl,
+        downloadUrl,
+        status,
+        thumbnail_public_id,
+        pdf_public_id,
+        thumbnail_format,
+        pdf_format,
+        thumbnail_bytes,
+        pdf_bytes,
+      },
       { new: true, runValidators: true }
     );
 
@@ -305,7 +461,6 @@ export const getBookCombos = async (req, res) => {
 export const deleteBook = async (req, res) => {
   try {
     const book = await Store.findById(req.body.id);
-    console.log(req.body);
 
     if (!book) {
       return res.status(404).json({ success: false, message: "Book not found" });
@@ -420,6 +575,7 @@ export const downloadWithToken = async (req, res) => {
 import axios from 'axios';
 import BookStoreCombo from "../models/BookStoreCombo.js";
 import mongoose from "mongoose";
+import { captureBookPayment } from "./BookStorePayment.js";
 
 export const downloadWithTokenAxios = async (req, res) => {
   try {

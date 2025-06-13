@@ -10,6 +10,9 @@ import {
   downloadWithToken,
   createBooksCombo,
   getBookCombos,
+  getBookByIdAdmin,
+  deleteBookThumbnail,
+  deleteBookPdf,
 } from "../controllers/BookStore.js";
 import { auth, isAdmin, isStudent } from "../middleware/auth.js";
 
@@ -21,11 +24,14 @@ router.post("/verify", auth, isStudent, verifyBookPayment);
 router.post("/getAllBooks", getAllBooks);
 router.post("/createProduct", auth, isAdmin, createProduct);
 router.post("/getBookById", auth, getBookById);
-router.put("/updateBook", auth, isAdmin, updateBook);
+router.post("/updateBook", auth, isAdmin, updateBook);
 router.post("/deleteBook", auth, isAdmin, deleteBook);
 router.post("/generateStoreDownloadToken", auth, generateStoreDownloadToken)
 router.get('/download/:token', downloadWithToken);
 router.post("/createBooksCombo", auth, isAdmin, createBooksCombo)
+router.post("/deleteBookThumbnail", auth, isAdmin, deleteBookThumbnail)
+router.post("/deleteBookPdf", auth, isAdmin, deleteBookPdf)
+router.post('/getBookByIdAdmin', auth, isAdmin, getBookByIdAdmin)
 router.get("/getBookCombos", getBookCombos)
 
 export default router;
