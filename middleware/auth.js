@@ -64,12 +64,6 @@ export async function auth(req, res, next) {
 			req.body.token ||
 			req.header("Authorization")?.replace("Bearer ", "");
 
-		console.log("Auth middleware - Token found:", token ? "YES" : "NO");
-		console.log("Token source:", {
-			cookie: req.cookies.token ? "EXISTS" : "MISSING",
-			body: req.body.token ? "EXISTS" : "MISSING",
-			header: req.header("Authorization") ? "EXISTS" : "MISSING"
-		});
 
 		if (!token) {
 			return res.status(401).json({ success: false, message: "Token Missing" });

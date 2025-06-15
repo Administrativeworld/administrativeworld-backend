@@ -385,16 +385,22 @@ export async function getACourse(req, res) {
       .populate([
         {
           path: "courseContent",
-          populate: {
-            path: "subSection",
-            select: "title description"
-          },
+          populate: [
+            {
+              path: "subSection",
+              select: "title description"
+            },
+            {
+              path: "exercises",
+            }
+          ]
         },
         {
           path: "category",
           select: "name"
-        }
+        },
       ]);
+
 
     if (!course) {
       return res.status(404).json({ message: "Course not found" });
@@ -506,6 +512,11 @@ export async function getFullCourseDetails(req, res) {
         path: "courseContent",
         populate: {
           path: "subSection",
+        },
+      }).populate({
+        path: "courseContent",
+        populate: {
+          path: "exercises",
         },
       })
       .exec()

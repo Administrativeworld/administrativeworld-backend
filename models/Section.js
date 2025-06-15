@@ -1,18 +1,27 @@
 import mongoose from "mongoose";
 
-// Define the Section schema
+// Define the Section schema with exercises support
 const sectionSchema = new mongoose.Schema({
 	sectionName: {
-		type: String,
+		type: String
 	},
 	subSection: [
 		{
 			type: mongoose.Schema.Types.ObjectId,
 			required: true,
-			ref: "SubSection",
-		},
+			ref: "SubSection"
+		}
 	],
+	exercises: [
+		{
+			type: mongoose.Schema.Types.ObjectId,
+			ref: "Exercise"
+		}
+	],
+	createdAt: {
+		type: Date,
+		default: Date.now
+	}
 });
 
-// Export the Section model
 export default mongoose.model("Section", sectionSchema);
