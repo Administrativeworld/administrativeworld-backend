@@ -140,7 +140,7 @@ export const submitAnswer = async (req, res) => {
 
 // Get user's answers for an exercise
 export const getUserAnswers = async (req, res) => {
-  console.log("get awser user called");
+  console.log({ "get awser user called": "" });
   try {
 
     const { exerciseId } = req.query;
@@ -155,7 +155,7 @@ export const getUserAnswers = async (req, res) => {
         select: "_id firstName lastName email image"
       })
       .exec();
-      console.log(answers);
+    console.log(answers);
     res.status(200).json({
       success: true,
       answers
@@ -225,7 +225,7 @@ export const getUserAnswersAdmin = async (req, res) => {
         select: "_id firstName lastName email image"
       })
       .exec();
-      console.log(answers);
+    console.log(answers);
     res.status(200).json({
       success: true,
       answers
@@ -242,11 +242,11 @@ export const getUserAnswersAdmin = async (req, res) => {
 
 export const updateUserAnswerAttachment = async (req, res) => {
   try {
-    
+
     const { id } = req.params;
     const { attachmentUrl, format, bytes, resource_type } = req.body;
-    console.log("id is call",id);
-    console.log("data is call",attachmentUrl, format, bytes, resource_type);
+    console.log("id is call", id);
+    console.log("data is call", attachmentUrl, format, bytes, resource_type);
     const updated = await UserAnswer.findByIdAndUpdate(
       id,
       {

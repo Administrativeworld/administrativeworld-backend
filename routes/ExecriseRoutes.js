@@ -21,7 +21,7 @@ router.get("/getSectionContent", auth, getSectionContent);
 
 // Student routes - Submit and get answers
 router.post("/submitAnswer/:exerciseId/:questionId/", auth, submitAnswer);
-// router.post("/getUserAnswers", auth, isAdmin, getUserAnswers);
+router.post("/getUserAnswers", auth, getUserAnswers);
 router.post("/getUserAnswersAdmin", auth, isAdmin, getUserAnswersAdmin);
 router.put("/updateUserAnswerAttachment/:id", auth, isAdmin, updateUserAnswerAttachment);
 
