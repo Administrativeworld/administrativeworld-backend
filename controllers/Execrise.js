@@ -140,7 +140,9 @@ export const submitAnswer = async (req, res) => {
 
 // Get user's answers for an exercise
 export const getUserAnswers = async (req, res) => {
+  console.log("get awser user called");
   try {
+
     const { exerciseId } = req.query;
     const userId = req.user.id;
     const answers = await UserAnswer.find({
@@ -153,7 +155,7 @@ export const getUserAnswers = async (req, res) => {
         select: "_id firstName lastName email image"
       })
       .exec();
-
+      console.log(answers);
     res.status(200).json({
       success: true,
       answers
@@ -205,3 +207,71 @@ export const getSectionContent = async (req, res) => {
     });
   }
 };
+
+
+// Get user's answers for an exercise
+export const getUserAnswersAdmin = async (req, res) => {
+  console.log("get awser user Admin called");
+  try {
+
+    const { exerciseId } = req.query;
+    const userId = req.user.id;
+    const answers = await UserAnswer.find({
+      exercise: exerciseId
+    })
+      .populate("question")
+      .populate({
+        path: 'user',
+        select: "_id firstName lastName email image"
+      })
+      .exec();
+      console.log(answers);
+    res.status(200).json({
+      success: true,
+      answers
+    });
+  } catch (error) {
+    console.error("Error fetching user answers:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch answers",
+      error: error.message
+    });
+  }
+};
+
+export const updateUserAnswerAttachment = async (req, res) => {
+  try {
+    
+    const { id } = req.params;
+    const { attachmentUrl, format, bytes, resource_type } = req.body;
+    console.log("id is call",id);
+    console.log("data is call",attachmentUrl, format, bytes, resource_type);
+    const updated = await UserAnswer.findByIdAndUpdate(
+      id,
+      {
+        attachmentUrl,
+        attachment_format: format,
+        attachment_bytes: bytes,
+        attachment_resource_type: resource_type,
+        isChecked: true,
+      },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({
+        success: false,
+        message: `UserAnswer with ID ${id} not found`,
+      });
+    }
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to update UserAnswer",
+      error: error.message,
+    });
+  }
+};  

@@ -442,7 +442,7 @@ export const courseEnrollmentEmail = (courseName, name) => {
         </div>
         
         <div class="cta-section">
-          <a href="https://studynotion-edtech-project.vercel.app/dashboard" class="cta-button">Go to Dashboard</a>
+          <a href="https://administrativeworld.live/home/user" class="cta-button">Go to Dashboard</a>
           <a href="#" class="secondary-cta">Course Preview</a>
         </div>
       </div>

@@ -4,7 +4,9 @@ import {
   getExercise,
   submitAnswer,
   getUserAnswers,
-  getSectionContent
+  getSectionContent,
+  getUserAnswersAdmin,
+  updateUserAnswerAttachment
 } from "../controllers/Execrise.js";
 import { auth, isAdmin } from "../middleware/auth.js";
 
@@ -19,6 +21,8 @@ router.get("/getSectionContent", auth, getSectionContent);
 
 // Student routes - Submit and get answers
 router.post("/submitAnswer/:exerciseId/:questionId/", auth, submitAnswer);
-router.post("/getUserAnswers", auth, isAdmin, getUserAnswers);
+// router.post("/getUserAnswers", auth, isAdmin, getUserAnswers);
+router.post("/getUserAnswersAdmin", auth, isAdmin, getUserAnswersAdmin);
+router.put("/updateUserAnswerAttachment/:id", auth, isAdmin, updateUserAnswerAttachment);
 
 export default router;

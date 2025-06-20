@@ -218,6 +218,36 @@ export const verifyPayment = async (req, res) => {
 
 
 // Manual enrollment (for admin use)
+
+// ✅ Helper function to enroll a student
+async function enrollStudent(courseId, userId) {
+  // Add course to user's enrolled courses
+  await User.findByIdAndUpdate(userId, {
+    $addToSet: { courses: courseId },
+  });
+
+  // Add user to course's enrolled students
+  await Course.findByIdAndUpdate(courseId, {
+    $addToSet: { studentsEnroled: userId },
+    $inc: { purchases: 1 }, // Optional: increment purchases count
+  });
+
+  // Create course progress document
+  const courseProgress = await CourseProgress.create({
+    courseID: courseId,
+    userId: userId,
+    completedVideos: [],
+  });
+
+  // Attach progress to user
+  await User.findByIdAndUpdate(userId, {
+    $push: { courseProgress: courseProgress._id },
+  });
+
+  return true;
+}
+
+// ✅ Controller for manual enrollment
 export async function manualEnrollStudent(req, res) {
   try {
     const { courseId, email } = req.body;
@@ -225,7 +255,7 @@ export async function manualEnrollStudent(req, res) {
     if (!courseId || !email) {
       return res.status(400).json({
         success: false,
-        message: "Course ID and email are required"
+        message: "Course ID and email are required",
       });
     }
 
@@ -234,40 +264,39 @@ export async function manualEnrollStudent(req, res) {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found"
+        message: "User not found",
       });
     }
 
-    // Check if already enrolled
+    // Find course by ID
     const course = await Course.findById(courseId);
     if (!course) {
       return res.status(404).json({
         success: false,
-        message: "Course not found"
+        message: "Course not found",
       });
     }
 
-    if (course.studentsEnroled.includes(user._id)) {
+    // Check if already enrolled
+    if (Array.isArray(course.studentsEnroled) && course.studentsEnroled.includes(user._id)) {
       return res.status(400).json({
         success: false,
-        message: "Student is already enrolled in this course"
+        message: "Student is already enrolled in this course",
       });
     }
 
-    // Enroll student
+    // ✅ Enroll the student using helper
     await enrollStudent(courseId, user._id);
 
     return res.status(200).json({
       success: true,
       message: "Student enrolled successfully",
     });
-
   } catch (error) {
     console.error("Manual enrollment error:", error);
     return res.status(500).json({
       success: false,
-      message: "Manual enrollment failed"
+      message: "Manual enrollment failed",
     });
   }
 }
-

@@ -44,6 +44,10 @@ const userAnswerSchema = new mongoose.Schema({
   isSubmitted: {
     type: Boolean,
     default: false
+  },
+  isChecked: {
+    type: Boolean,
+    default: false
   }
 });
 
