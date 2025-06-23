@@ -43,7 +43,7 @@ export const generateSignatureOverwrite = (req, res) => {
 
     const timestamp = Math.floor(Date.now() / 1000);
     const paramsToSign = {
-      overwrite,
+      overwrite: overwrite.toString(), // ✅ Force string
       public_id: publicId,
       timestamp,
       upload_preset: uploadPreset,
