@@ -6,7 +6,7 @@ import {
   getUserAnswers,
   getSectionContent,
   getUserAnswersAdmin,
-  updateUserAnswerAttachment
+  updateUserAnswerAttachment,
 } from "../controllers/Execrise.js";
 import { auth, isAdmin } from "../middleware/auth.js";
 
@@ -23,6 +23,11 @@ router.get("/getSectionContent", auth, getSectionContent);
 router.post("/submitAnswer/:exerciseId/:questionId/", auth, submitAnswer);
 router.post("/getUserAnswers", auth, getUserAnswers);
 router.post("/getUserAnswersAdmin", auth, isAdmin, getUserAnswersAdmin);
-router.put("/updateUserAnswerAttachment/:id", auth, isAdmin, updateUserAnswerAttachment);
+router.put(
+  "/updateUserAnswerAttachment/:id",
+  auth,
+  isAdmin,
+  updateUserAnswerAttachment
+);
 
 export default router;
