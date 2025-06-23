@@ -3,60 +3,6 @@ import dotenv from "dotenv";
 import User from "../models/UserModel.js";
 dotenv.config();
 
-// export async function auth(req, res, next) {
-// 	try {
-// 		// Get JWT token from cookie, body, or Authorization header
-// 		const token =
-// 			req.cookies.token ||
-// 			req.body.token ||
-// 			req.header("Authorization")?.replace("Bearer ", "");
-
-// 		if (!token) {
-// 			return res.status(401).json({ success: false, message: "Token Missing" });
-// 		}
-
-// 		try {
-// 			const decode = await jwt.verify(token, process.env.JWT_SECRET);
-
-// 			const userDoc = await User.findById(decode.id)
-// 				.populate("additionalDetails")
-// 				.populate({
-// 					path: "courses",
-// 					populate: {
-// 						path: "instructor", // populate instructor inside each course
-// 						model: "user", // explicitly mention model if needed
-// 						select: "firstName lastName _id",
-// 					},
-// 				})
-// 				.populate({
-// 					path: "courses",
-// 					populate: {
-// 						path: "category", // populate instructor inside each course
-// 						model: "Category", // explicitly mention model if needed
-// 						select: "name _id",
-// 					},
-// 				})
-// 				.populate({
-// 					path: "materials",
-// 					populate: [
-// 						{
-// 							path: "author", // populate author inside each material
-// 						}
-// 					],
-// 				});
-
-// 			req.user = userDoc;
-// 			next();
-// 		} catch (error) {
-// 			return res.status(401).json({ success: false, message: "Token is invalid" });
-// 		}
-// 	} catch (error) {
-// 		return res.status(401).json({
-// 			success: false,
-// 			message: "Something went wrong while validating the token",
-// 		});
-// 	}
-// }
 export async function auth(req, res, next) {
 	try {
 		const token =
@@ -71,7 +17,6 @@ export async function auth(req, res, next) {
 
 		try {
 			const decode = await jwt.verify(token, process.env.JWT_SECRET);
-			console.log("Token decoded successfully, user ID:", decode.id);
 
 			const userDoc = await User.findById(decode.id)
 				.populate("additionalDetails")
@@ -105,10 +50,7 @@ export async function auth(req, res, next) {
 				return res.status(401).json({ success: false, message: "User not found" });
 			}
 
-			console.log("User found:", userDoc.email);
-			console.log("Current session exists:", userDoc.currentSession ? "YES" : "NO");
-			console.log("Session active:", userDoc.currentSession?.isActive);
-			console.log("Token match:", userDoc.currentSession?.token === token);
+
 
 			// Check if current session is valid
 			if (!userDoc.currentSession ||

@@ -1,10 +1,10 @@
-//Admin apis
 
 import Article from "../models/Article.js";
 import User from "../models/UserModel.js";
 
 export const createArticle = async (req, res) => {
   try {
+    console.log('createArticle called ->>')
     const isUserExists = await User.findById(req.user.id);
     if (!isUserExists) {
       return res.status(401).json({ message: "user not exists" })
@@ -22,7 +22,8 @@ export const createArticle = async (req, res) => {
       status,
       isFeatured,
       isTrending,
-    } = req.body;
+    } = req.body.formData || req.body;
+
     if (!title ||
       !slug ||
       !content ||
@@ -34,6 +35,7 @@ export const createArticle = async (req, res) => {
         message: "fill required fields"
       })
     }
+
     // Check for duplicate slug
     const existingArticle = await Article.findOne({ slug });
     if (existingArticle) {
@@ -172,5 +174,35 @@ export const getAllArticlesAdmin = async (req, res) => {
   } catch (error) {
     console.error('Error retrieving articles:', error);
     res.status(500).json({ message: 'Server error while retrieving articles.' });
+  }
+};
+export const getArticleById = async (req, res) => {
+  try {
+    console.log("getArticleById called ->>");
+    const isUserExists = await User.findById(req.user.id);
+
+    if (!isUserExists) {
+      return res.status(401).json({ message: "User not exists" });
+    }
+
+    if (isUserExists.accountType !== "Admin") {
+      return res.status(401).json({ message: "Admin not exists" });
+    }
+
+    const { id } = req.params;
+
+    const article = await Article.findById(id).populate({
+      path: "author",
+      select: "firstName lastName email image"
+    });
+
+    if (!article) {
+      return res.status(404).json({ message: "Article not found." });
+    }
+
+    res.status(200).json({ message: 'Article retrieved successfully.', article });
+  } catch (error) {
+    console.error('Error retrieving article by ID:', error);
+    res.status(500).json({ message: 'Server error while retrieving the article.' });
   }
 };
