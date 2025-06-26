@@ -13,6 +13,7 @@ import passport from "passport";
 import session from "express-session";
 import "./config/passport.js";
 import setupRoutes from './setupRoutes.js'; // Import centralized routes
+import Article from './models/Article.js';
 
 dotenv.config();
 
@@ -22,6 +23,12 @@ const app = express();
 // Connect to Database and Cloudinary
 await connect();  // Ensure database is connected before proceeding
 await cloudinaryConnect();
+// await Article.updateMany({}, {
+// 	$set: {
+// 		thumbnail: "https://res.cloudinary.com/dqvkbnrlu/image/upload/v1750916457/Untitled_1_bop6lo.jpg"
+// 	}
+// });
+
 
 // Middleware
 app.use(express.json());
