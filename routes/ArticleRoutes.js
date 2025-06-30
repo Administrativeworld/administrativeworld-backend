@@ -1,15 +1,16 @@
 import express from "express";
 import { auth, isAdmin } from "../middleware/auth.js";
-import { createArticle, deleteArticle, editArticle, getAllArticlesAdmin, getAllArticlesPublic, getArticleBySlug, getArticlesByCategory, getFeaturedArticles, getRelatedArticles, getTrendingArticles } from "../controllers/Articles.js";
+import { deleteArticle, editArticle, getAllArticlesAdmin, getAllArticlesPublic, getArticleById, getArticleBySlug, getArticlesByCategory, getFeaturedArticles, getRelatedArticles, getTrendingArticles, upsertArticle } from "../controllers/Articles.js";
 const router = express.Router();
 
 
 
 //Admin Routes
-router.post("/createArticle", auth, isAdmin, createArticle)
+router.post("/createArticle", auth, isAdmin, upsertArticle)
 router.post("/editArticle", auth, isAdmin, editArticle)
 router.post("/deleteArticle", auth, isAdmin, deleteArticle)
 router.post("/getAllArticleAdmin", auth, isAdmin, getAllArticlesAdmin)
+router.post("/getArticleById", auth, isAdmin, getArticleById)
 
 // GET /api/article/:id
 router.get('/getArticleBySlug', getArticleBySlug);

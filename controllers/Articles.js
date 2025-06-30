@@ -1,69 +1,48 @@
 
+import mongoose from "mongoose";
 import Article from "../models/Article.js";
 import User from "../models/UserModel.js";
 
-export const createArticle = async (req, res) => {
+export const getArticleById = async (req, res) => {
   try {
-    console.log('createArticle called ->>')
     const isUserExists = await User.findById(req.user.id);
     if (!isUserExists) {
       return res.status(401).json({ message: "user not exists" })
     }
-    const {
-      title,
-      slug,
-      content,
-      category,
-      tags,
-      metaTitle,
-      metaDescription,
-      keywords,
-      thumbnail,
-      status,
-      isFeatured,
-      isTrending,
-    } = req.body.formData || req.body;
+    const { id } = req.query;
 
-    if (!title ||
-      !slug ||
-      !content ||
-      !category ||
-      !tags ||
-      !metaTitle ||
-      !metaDescription) {
+    // Validate MongoDB ObjectId
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
-        message: "fill required fields"
-      })
+        success: false,
+        message: "Invalid or missing article ID.",
+      });
     }
 
-    // Check for duplicate slug
-    const existingArticle = await Article.findOne({ slug });
-    if (existingArticle) {
-      return res.status(400).json({ message: 'Article with this slug already exists.' });
+    // Find article and populate referenced fields
+    const article = await Article.findById(id)
+      .populate("category", "name slug") // Adjust populated fields as needed
+      .populate("author", "username email profilePicture")
+      .exec();
+
+    if (!article) {
+      return res.status(404).json({
+        success: false,
+        message: "Article not found.",
+      });
     }
 
-    const newArticle = new Article({
-      title,
-      slug,
-      content,
-      category,
-      tags,
-      metaTitle,
-      metaDescription,
-      keywords,
-      thumbnail,
-      status: status || 'Draft',
-      isFeatured: isFeatured || false,
-      isTrending: isTrending || false,
-      author: req.user._id, // Assuming you attach user info via authentication middleware
+    return res.status(200).json({
+      success: true,
+      data: article,
     });
 
-    const savedArticle = await newArticle.save();
-
-    res.status(201).json({ message: 'Article created successfully.', article: savedArticle });
   } catch (error) {
-    console.error('Error creating article:', error);
-    res.status(500).json({ message: 'Server error while creating article.' });
+    console.error("Error fetching article:", error);
+    return res.status(500).json({
+      success: false,
+      message: "An unexpected error occurred while fetching the article.",
+    });
   }
 };
 // Edit Article
@@ -126,6 +105,153 @@ export const editArticle = async (req, res) => {
   } catch (error) {
     console.error('Error updating article:', error);
     res.status(500).json({ message: 'Server error while updating article.' });
+  }
+};
+export const upsertArticle = async (req, res) => {
+  try {
+    console.log('upsertArticle called ->>')
+
+    // Check if user exists
+    const isUserExists = await User.findById(req.user.id);
+    if (!isUserExists) {
+      return res.status(401).json({ message: "user not exists" });
+    }
+
+    // Extract data from request body (handle both formData and direct body)
+    const {
+      title,
+      slug,
+      content,
+      category,
+      tags,
+      metaTitle,
+      metaDescription,
+      keywords,
+      thumbnail,
+      status,
+      isFeatured,
+      isTrending,
+    } = req.body.formData || req.body;
+
+    // Get article ID from query parameters (if provided, it's an edit operation)
+    const { id } = req.query;
+
+    // Validate required fields
+    if (!title ||
+      !slug ||
+      !content ||
+      !category ||
+      !tags ||
+      !metaTitle ||
+      !metaDescription) {
+      return res.status(400).json({
+        message: "fill required fields"
+      });
+    }
+
+    let isEditMode = false;
+    let existingArticle = null;
+
+    // Check if this is an edit operation (ID provided)
+    if (id) {
+      existingArticle = await Article.findById(id);
+      if (!existingArticle) {
+        return res.status(404).json({ message: 'Article not found for editing.' });
+      }
+      isEditMode = true;
+      console.log("Edit mode: updating article with ID:", id);
+    } else {
+      console.log("Create mode: creating new article");
+    }
+
+    // Check for duplicate slug
+    const duplicateSlugQuery = isEditMode
+      ? { slug, _id: { $ne: id } }  // Exclude current article in edit mode
+      : { slug };                   // Check all articles in create mode
+
+    const duplicateSlug = await Article.findOne(duplicateSlugQuery);
+    if (duplicateSlug) {
+      return res.status(400).json({
+        message: 'Article with this slug already exists.'
+      });
+    }
+
+    // Prepare article data
+    const articleData = {
+      title,
+      slug,
+      content,
+      category,
+      tags,
+      metaTitle,
+      metaDescription,
+      keywords,
+      thumbnail,
+      status: status || 'Draft',
+      isFeatured: isFeatured || false,
+      isTrending: isTrending || false,
+      updatedAt: new Date(),
+    };
+
+    let savedArticle;
+    let responseMessage;
+
+    if (isEditMode) {
+      // Update existing article
+      savedArticle = await Article.findByIdAndUpdate(
+        id,
+        articleData,
+        { new: true, runValidators: true }
+      );
+      responseMessage = 'Article updated successfully.';
+      console.log("Article updated successfully:", savedArticle.title);
+    } else {
+      // Create new article
+      articleData.author = req.user._id; // Set author only for new articles
+      articleData.createdAt = new Date();
+
+      const newArticle = new Article(articleData);
+      savedArticle = await newArticle.save();
+      responseMessage = 'Article created successfully.';
+      console.log("Article created successfully:", savedArticle.title);
+    }
+
+    // Set publishedAt date if status is Published and it's not already set
+    if (savedArticle.status === 'Published' && !savedArticle.publishedAt) {
+      savedArticle.publishedAt = new Date();
+      await savedArticle.save();
+    }
+
+    res.status(isEditMode ? 200 : 201).json({
+      message: responseMessage,
+      article: savedArticle,
+      operation: isEditMode ? 'update' : 'create'
+    });
+
+  } catch (error) {
+    console.error('Error in upsertArticle:', error);
+
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      const validationErrors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({
+        message: 'Validation error',
+        errors: validationErrors
+      });
+    }
+
+    // Handle duplicate key errors
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyValue)[0];
+      return res.status(400).json({
+        message: `${field} already exists. Please use a different ${field}.`
+      });
+    }
+
+    res.status(500).json({
+      message: 'Server error while processing article.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 
